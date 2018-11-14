@@ -1,16 +1,16 @@
 //微信小程序不支持fetch，这里改造以下
-var loadFile = new Promise(function (resolve, reject) {
-    let fsm = wx.getFileSystemManager();
-    fsm.readFile({
-      filePath: "gif_helper.wasm",
-      success: function (res) {
-        resolve(res.data);
-      },
-      fail: function (err) {
-        reject(err);
-      }
-    });
-  });
+// var loadFile = new Promise(function (resolve, reject) {
+//     let fsm = wx.getFileSystemManager();
+//     fsm.readFile({
+//       filePath: "gif_helper.wasm",
+//       success: function (res) {
+//         resolve(res.data);
+//       },
+//       fail: function (err) {
+//         reject(err);
+//       }
+//     });
+//   });
 
   //wasm文件在真机上传时会丢掉
   //用wx.request请求demo.wasm时，在本地正常，真机调试wasm解析会报错，
@@ -28,6 +28,10 @@ var loadFile = new Promise(function (resolve, reject) {
   //     }
   // })});
 
-  var wasm_instance = loadFile
-            .then( function( bytes ) { return WebAssembly.compile( bytes ); } )
+  const arrayBuffer = wx.base64ToArrayBuffer("");
+  var wasm_instance = WebAssembly.compile(arrayBuffer)
             .then( function( mod ) { return WebAssembly.instantiate( mod, instance.imports ) });
+
+  // var wasm_instance = loadFile
+  //           .then( function( bytes ) { return WebAssembly.compile( bytes ); } )
+  //           .then( function( mod ) { return WebAssembly.instantiate( mod, instance.imports ) });

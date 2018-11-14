@@ -3,9 +3,9 @@ App({
   onLaunch: function () {
     
     var gifHelper = require("gif_helper.js");
-
+    var that = this;
     gifHelper.then(function (helper) {
-      console.log(helper.test());
+      that.globalData.gifHelper = helper;
     });
 
     // 展示本地存储能力
@@ -41,6 +41,7 @@ App({
     })
   },
   globalData: {
-    userInfo: null
+    userInfo: null,
+    gifHelper: null,
   }
 })

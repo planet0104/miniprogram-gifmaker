@@ -1,7 +1,10 @@
 var fs = require("fs");
 var nodeCmd = require('node-cmd');
 var gif_helper_js = fs.readFileSync("./target/wasm32-unknown-unknown/release/gif_helper.js","utf-8");
+
 var replace_content = fs.readFileSync("./replace_content.js","utf-8");
+let wasm = fs.readFileSync("./target/wasm32-unknown-unknown/release/gif_helper.wasm");
+replace_content = replace_content.replace("\"\"", "\""+new Buffer(wasm).toString('base64')+"\"");
 
 gif_helper_js = gif_helper_js.replace('var wasm_instance = ( typeof WebAssembly.instantiateStreaming === "function"', "");
 gif_helper_js = gif_helper_js.replace('? WebAssembly.instantiateStreaming( file, instance.imports )', '');

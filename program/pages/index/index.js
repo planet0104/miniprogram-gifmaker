@@ -11,15 +11,41 @@ Page({
   },
   //事件处理函数
   bindViewTap: function(a) {
-    console.log(a.target);
-    const ctx = wx.createCanvasContext('firstCanvas');
-    ctx.drawImage(a.target, 0, 0, 300, 200);
-    ctx.draw();
-    // wx.navigateTo({
-    //   url: '../logs/logs'
-    // })
+    console.log("开始拍照");
+    const canvasContext = wx.createCanvasContext('canvas');
+    // ctx.drawImage("/rust.jpg");
+    // ctx.draw();
+    // let fsm = wx.getFileSystemManager();
+    // fsm.readFile({
+    //   filePath: "rust.jpg",
+    //   encoding: "base64",
+    //   success: function (res) {
+    //     console.log("照片读取结果:", res);
+    //     console.log("gifHelper.add:", app.globalData.gifHelper.add(res.data));
+    //   },
+    //   fail: function (err) {
+    //     console.log("照片读取失败:", err);
+    //   }
+    // });
+    const ctx = wx.createCameraContext()
+    ctx.takePhoto({
+      quality: 'low',
+      success: (res) => {
+        console.log("拍照结果:", res.tempImagePath);
+        wx.getImageInfo({
+          src: res.tempImagePath,
+          success(res) {
+            console.log(res.width)
+            console.log(res.height)
+          }
+        });
+        //canvasContext.drawImage(res.tempImagePath);
+        //canvasContext.draw();
+      }
+    });
   },
   onLoad: function () {
+
     if (app.globalData.userInfo) {
       this.setData({
         userInfo: app.globalData.userInfo,
@@ -48,11 +74,11 @@ Page({
     }
   },
   getUserInfo: function(e) {
-    console.log(e)
-    app.globalData.userInfo = e.detail.userInfo
-    this.setData({
-      userInfo: e.detail.userInfo,
-      hasUserInfo: true
-    })
+    // console.log(e)
+    // app.globalData.userInfo = e.detail.userInfo
+    // this.setData({
+    //   userInfo: e.detail.userInfo,
+    //   hasUserInfo: true
+    // })
   }
 })
