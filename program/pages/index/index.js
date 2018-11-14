@@ -13,6 +13,23 @@ Page({
   bindViewTap: function(a) {
     console.log("开始拍照");
     const canvasContext = wx.createCanvasContext('canvas');
+    canvasContext.setFillStyle('red');
+    canvasContext.fillRect(0, 0, 200, 200);
+    canvasContext.draw();
+    wx.getImageInfo({
+      src: "/screen.png",
+      success(res) {
+        let width = 200;
+        let height = 200.0/res.width*res.height;
+        console.log(res.width);
+        console.log(res.height);
+        console.log(width, height);
+        let top = (200-height)/2;
+        canvasContext.drawImage("/screen.png",0, top, width, height);
+        canvasContext.draw();
+      }
+    });
+
     // ctx.drawImage("/rust.jpg");
     // ctx.draw();
     // let fsm = wx.getFileSystemManager();
