@@ -2,11 +2,11 @@
 App({
   onLaunch: function () {
     
-    var gifHelper = require("gif_helper.js");
-    var that = this;
-    gifHelper.then(function (helper) {
-      that.globalData.gifHelper = helper;
-    });
+    // var gifHelper = require("gif_helper.js");
+    // var that = this;
+    // gifHelper.then(function (helper) {
+    //   that.globalData.gifHelper = helper;
+    // });
 
     // 展示本地存储能力
     var logs = wx.getStorageSync('logs') || []
