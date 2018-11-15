@@ -1,6 +1,6 @@
 <!--index.wxml-->
 <canvas style="margin:-100vw 0px 0px 0px;width: 100vw; height: 100vw;" canvas-id="canvas"></canvas>
-<camera device-position="{{cam_position}}" id="camera" style='width:100vw; height:100vw'></camera>
+<camera flash='off' device-position="{{cam_position}}" id="camera" style='width:100vw; height:100vw'></camera>
 
 <!-- 模式切换 -->
 <text id='tip' class='horizontal_center pt10' style="color:#888;font-size:15px;">{{tip}}</text>

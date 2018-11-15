@@ -175,16 +175,25 @@ Page({
     });
   },
   createGifFromPhotos: function(){
+    var page = this;
     //生成完毕使能生成按钮 page.setData({ create_disable: false });
     wx.showLoading({
       title: '正在生成GIF...',
       mask: true,
     });
-    photos.forEach(function(){
-      s
-      page.addImage(res.tempImagePath, function () {
+    let success_count = 0;
+    photos.forEach(function(path, index){
+      wx.showLoading({
+        title: '添加图片('+(index+1)+"/"+photos.length+")",
+        mask: true,
+      });
+      page.addImage(path, function () {
+        success_count += 1;
         console.log("图片已添加.");
-        if (cb) cb(true);
+        if(success_count == photos.length){
+          console.log("图片加载完成");
+          page.createGif();
+        }
       });
     });
   },
@@ -209,13 +218,14 @@ Page({
       this.setData({ tipStart: "停止" });
       page.setData({ create_disable: true});
     }
+    console.log("开始拍照");
     cameraContext.takePhoto({
       quality: 'normal',
       success: (res) => {
-        //console.log("拍照结果:", res.tempImagePath);
+        console.log("拍照结果:", res.tempImagePath);
         photos.push(res.tempImagePath);
         //继续拍摄下一张
-        page.startAutoCapture();
+        setTimeout(page.startAutoCapture, 200);
       },
       fail: function (res) {
         autoCaptureStartTime = 0;
