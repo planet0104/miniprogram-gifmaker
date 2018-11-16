@@ -31,38 +31,108 @@
   padding:10px;
 }
 
+.p5{
+  padding-top: 5px;
+}
+
 .reload{
-  right: 16px;
+  right: 8px;
   position: absolute;
   width:30px;
   height:30px;
-  margin-top: 7px;
+  margin-top: 27px;
+}
+
+.album{
+  right: 45px;
+  position: absolute;
+  width:30px;
+  height:30px;
+  margin-top: 27px;
+}
+
+.trash{
+  position: absolute;
+  right: 82px;
+  margin-top: 27px;
+  height: 28px;
+  width: 28px;
+}
+
+.photo{
+  width: 50px;
+  height: 50px;
+  border:solid 2px #fefefe;
+  border-radius: 16px;
+  margin-right: 1px;
+}
+
+.arrow-down{
+  margin-left: 5px;
+  width: 6px;
+  height: 6px;
+  /* background: rgba(255, 0,0,0.1); */
+  border-color:#969696;
+  border-width: 0 0 2px 2px;
+  border-style: solid;
+  transform:rotateZ(-45deg);
 }
 
 .picker_text{
   font-size: 15px;
+  text-align: center;
+}
+.picker_text_parent{
   border: 1px solid #c6c6c6; 
-  border-radius: 12px;
-  padding-top: 2px;
+  border-radius: 10px;
   display: flex;
-  width:42px;
+  width:56px;
+  height: 30px;
   align-items: center;
   justify-content: center;  
-  text-align: center;
-  padding-bottom: 2px;
 }
-
 .picker{
-  left: 8px;
+  left: 5px;
   position: absolute;
-  margin-top: 10px;
+  margin-top: 27px;
 }
 
+.make{
+  position: absolute;
+  left: 68px;
+  margin-top: 27px;
+  font-size: 15px;
+  padding-bottom: 3px;
+  border: 1px solid #c6c6c6; 
+  border-radius: 10px;
+  display: flex;
+  padding: 0px;
+  height: 32px;
+  width: 45px;
+  align-items: center;
+  justify-content: center;  
+}
+
+.gif{
+  width:50px;
+  height:26px;
+  left: 80px;
+  position: absolute;
+  margin-top: 30px;
+}
 
 .btn1{
-  width:100%;
-  margin-left: 12px;
-  margin-right: 6px;
+  width:70px;
+  height: 70px;
+  margin: 10px;
+  border: 2px solid #c6c6c6; 
+  border-radius: 35px;
+  display: flex;
+  margin-top: 10px;
+  align-items: center;
+  font-size: 18px;
+  justify-content: center;  
+  text-align: center;
 }
 
 .btn2{

@@ -1,0 +1,6 @@
+<!--index.wxml-->
+<image style='margin:5vw; width:92vw; height:92vw' src='{{path}}'></image>
+<view style='display:flex'>
+<button bindtap='cancel' style='width:100%;margin:10px;'>取消</button>
+<button bindtap='save' style='width:100%;margin:10px;'>保存到相册</button>
+</view>

@@ -1,51 +1,26 @@
 //index.js
 //获取应用实例
 const app = getApp()
-const autoTip = "自动连续拍摄照片(<=3秒)";
-const manualTip = "点击拍照按钮添加照片";
-const txtStart = "开始";
-const MOD_AUTO = "auto";
-const txtCpature = "拍照";
-const MOD_MANUAL = "manual";
 const IMAGE_WIDTH = 200.0;
 const IMAGE_HEIGHT = 200.0;
 
-var startCounter = -1; //倒计时 -1:未开始, 0:正在拍照
 var canvasContext;
 var cameraContext;
-var stopContinuousCapture = false;
-//连续拍摄的照片路径数组
 var photos = [];
-var autoCaptureStartTime = 0;
 
 Page({
   data: {
-    mode: MOD_AUTO,
-    tipStart: txtStart,
-    tip: autoTip,
-    cam_position: 'front',
-    mdisable: false,
+    cam_position: '前置',
     btnDisabled: false,
-    create_disable: false,
-    adisable: false,
     image_count: 0,
-    fps: '2帧',
-    fpsArray: ['1帧/秒', '2帧/秒', '3帧/秒', '4帧/秒', '5帧/秒', '6帧/秒', '7帧/秒', '8帧/秒', '9帧/秒', '10帧/秒', '11帧/秒', '12帧/秒']
-  },
-  fnCount: function(){
-    if (startCounter == 0){
-      //开始自动拍照
-      console.log("开始自动拍照...");
-      this.startAutoCapture();
-    }else{
-      startCounter -= 1;
-      setTimeout(this.fnCount, 1000);
-      this.setData({tipStart: "摆好姿势!"+startCounter+"s" });
-    }
+    fps: '3帧',
+    fps_id: 2,
+    fpsArray: ['1帧/秒', '2帧/秒', '3帧/秒', '4帧/秒', '5帧/秒', '6帧/秒', '7帧/秒', '8帧/秒', '9帧/秒', '10帧/秒', '11帧/秒', '12帧/秒'],
+    photos: []
   },
   createGif: function(){
-    let count = app.globalData.gifHelper.count();
-    //console.log("生成gif，图片数量：", count);
+    var page = this;
+    let count = photos.length;
     if(count <= 1){
       var msg = "至少拍摄两张照片";
       if (count == 0) {
@@ -54,71 +29,94 @@ Page({
       wx.showToast({icon:'none', title: msg, });
     }else{
       //生成gif
+      var makeCount = -1;
       wx.showLoading({
-        title: "正在生成GIF图...",
+        title: "GIF制作中...",
         mask: true,
       });
-      let imageStr = app.globalData.gifHelper.create(IMAGE_WIDTH, IMAGE_HEIGHT, parseInt(this.data.fps.replace('帧', '')));
-      const arrayBuffer = wx.base64ToArrayBuffer(imageStr);
-      let fsm = wx.getFileSystemManager();
-      let filePath = `${wx.env.USER_DATA_PATH}/` + 'create.gif';
-      fsm.writeFile({
-        filePath: filePath,
-        data: arrayBuffer,
-        success: function (res) {
-          console.log("gif创建成功:", res);
-          wx.saveImageToPhotosAlbum({
-            filePath: filePath,
-            success: function(res){
-              wx.hideLoading();
-              wx.showToast({ title: 'GIF已保存到到相册'});
-              app.globalData.gifHelper.clear();
-            },
-            fail: function(err){
-              wx.showModal({
-                title: '提示',
-                content: "GIF保存失败!" + JSON.stringify(err),
-                showCancel: false,
-              });
-            }
+      app.globalData.gifHelper.clear();
+      var cb1;
+      var cb = function () {
+        makeCount += 1;
+        if(makeCount==count){
+          //所有图片添加完成, 开始制作
+          console.log(new Date(), "所有图片添加完成, 开始制作gif...");
+          let imageStr = app.globalData.gifHelper.create(IMAGE_WIDTH, IMAGE_HEIGHT, parseInt(page.data.fps.replace('帧', '')));
+          console.log(new Date(), "制作gif结束:", imageStr);
+          //保存制作完成的gif
+          const arrayBuffer = wx.base64ToArrayBuffer(imageStr);
+          let fsm = wx.getFileSystemManager();
+          wx.showLoading({
+            title: "保存临时文件...",
+            mask: true,
           });
-        },
-        fail: function (err) {
-          console.log("gif创建失败失败:", err);
+          let filePath = `${wx.env.USER_DATA_PATH}/` + 'create'+Date.now()+'.gif';
+          console.log(new Date(), "开始保存临时文件...", filePath, arrayBuffer);
+          try{
+            let res = fsm.writeFileSync(filePath, arrayBuffer);
+            console.log(new Date(), new Date(), "gif创建结果:", res);
+            wx.hideLoading();
+            wx.showToast({
+              title: 'GIF制作完成',
+            });
+            wx.navigateTo({
+              url: '../preview/preview?path=' + filePath
+            });
+          }catch(e){
+            wx.showModal({
+              title: '错误',
+              content: '图片读取失败!' + JSON.stringify(e),
+            });
+          }
+          return;
         }
-      });
+        wx.showLoading({
+          title: "处理图片:(" + (makeCount + 1) + "/" + photos.length + ")",
+          mask: true,
+          });
+        //循环添加每一张图片
+        let fsm = wx.getFileSystemManager();
+        fsm.readFile({
+          filePath: photos[makeCount].path,
+          encoding: "base64",
+          success: function (res) {
+            console.log(new Date(), "base64照片读取结果:", res);
+            console.log(new Date(), "gifHelper.add:", app.globalData.gifHelper.add(res.data));
+            cb1();
+          },
+          fail: function (err) {
+            wx.hideLoading();
+            wx.showModal({
+              title: '错误',
+              content: '图片读取失败!' + JSON.stringify(res),
+            });
+          }
+        });
+      };
+      cb1 = cb;
+      cb();
     }
   },
-  //切换前后摄像头
-  changeCamera: function(){
-    if (startCounter != -1) {
-      // 0或者3 说明正在拍照
-      return;
-    }
-    let curPos = this.data.cam_position;
-    console.log("curPos=", curPos);
-    if(curPos=='front'){
-      this.setData({ cam_position: 'back'});
-    }else{
-      this.setData({ cam_position: 'front' });
-    }
+  clearImage: function(){
+    photos.length = 0;
+    this.setData({ photos: photos });
   },
-
-  addImage:function(fileName, cb){
+  addPhotosToList:function(path, cb){
     var page = this;
+    wx.showLoading({
+      title: '正在添加图片...',
+      mask: true,
+    });
     //添加一张照片
     wx.getImageInfo({
-      src: fileName,
+      src: path,
       success(res) {
-        console.log("照片信息:", res);
+        console.log(new Date(), "addPhotosToList>照片信息:", res);
         let width = IMAGE_WIDTH;
         let height = IMAGE_HEIGHT / res.width * res.height;
-        console.log(res.width);
-        console.log(res.height);
-        console.log(width, height);
         let top = (IMAGE_WIDTH - height) / 2;
-        canvasContext.drawImage(fileName, 0, top, width, height);
-        canvasContext.draw(false, function(){
+        canvasContext.drawImage(path, 0, top, width, height);
+        canvasContext.draw(false, function () {
           //提取图片
           wx.canvasToTempFilePath({
             x: 0,
@@ -129,182 +127,86 @@ Page({
             destHeight: IMAGE_HEIGHT,
             canvasId: 'canvas',
             success(res) {
-              console.log("canvas截图成功", res.tempFilePath);
-
-              //获取base64添加到gif工厂
-              let fsm = wx.getFileSystemManager();
-              fsm.readFile({
-                filePath: res.tempFilePath,
-                encoding: "base64",
-                success: function (res) {
-                  console.log("base64照片读取结果:", res);
-                  console.log("gifHelper.add:", app.globalData.gifHelper.add(res.data));
-                  cb();
-                },
-                fail: function (err) {
-                  console.log("base64照片读取失败:", err);
-                  cb();
-                }
-              });
-              console.log("图片总数:", app.globalData.gifHelper.count());
-            },
-            fail: function(err){
-              console.log("canvas截图失败!");
+              console.log(new Date(), "addPhotosToList>canvas截图成功", res.tempFilePath);
+              photos.push({ path: res.tempFilePath });
+              page.setData({ photos: photos });
+              wx.hideLoading();
               cb();
+            },
+            fail: function (err) {
+              cb();
+              wx.hideLoading();
+              wx.showModal({
+                title: '错误',
+                content: '添加失败!' + JSON.stringify(res),
+              });
             }
           });
         });
       }
     });
   },
-  takePhoto: function(cb){
+  //从相册选择照片
+  chooseImage: function(){
     var page = this;
-    cameraContext.takePhoto({
-      quality: 'normal',
-      success: (res) => {
-        console.log("拍照结果:", res.tempImagePath);
-        page.addImage(res.tempImagePath, function () {
-          console.log("图片已添加.");
-          if(cb) cb(true);
-        });
-      },
-      fail: function (res) {
-        console.log("拍照失败", res);
-        if (cb) cb(false);
+    wx.chooseImage({
+      sizeType: ['original', 'compressed'],
+      sourceType: ['album'],
+      success: res => {
+        if (res.tempFilePaths && res.tempFilePaths.length>0){
+          var idx = 0;
+          var cb1;
+          var cb = function(){
+              idx += 1;
+              if (idx < res.tempFilePaths.length) {
+                page.addPhotosToList(res.tempFilePaths[idx], cb1);
+              } else {
+                console.log(new Date(), '选择的图片:', page.data.photos);
+              }
+          };
+          cb1 = cb;
+          page.addPhotosToList(res.tempFilePaths[idx], cb1);
+        }
       }
     });
   },
-  createGifFromPhotos: function(){
-    var page = this;
-    //生成完毕使能生成按钮 page.setData({ create_disable: false });
-    wx.showLoading({
-      title: '正在生成GIF...',
-      mask: true,
-    });
-    let success_count = 0;
-    photos.forEach(function(path, index){
-      wx.showLoading({
-        title: '添加图片('+(index+1)+"/"+photos.length+")",
-        mask: true,
-      });
-      page.addImage(path, function () {
-        success_count += 1;
-        console.log("图片已添加.");
-        if(success_count == photos.length){
-          console.log("图片加载完成");
-          page.createGif();
-        }
-      });
-    });
+  //切换前后摄像头
+  changeCamera: function(){
+    let curPos = this.data.cam_position;
+    if(curPos=='front'){
+      this.setData({ cam_position: 'back'});
+    }else{
+      this.setData({ cam_position: 'front' });
+    }
   },
-  //连续拍摄照片
-  startAutoCapture:function(){
+  takePhoto: function(){
     var page = this;
-    //检查是否超过3s
-    if (autoCaptureStartTime!=0){
-        let elpased = Date.now()-autoCaptureStartTime;
-        if(elpased>3000){
-          wx.showToast({title: '拍摄完成'});
-          autoCaptureStartTime = 0;
-          this.setData({ tipStart: "开始" });
-          page.createGifFromPhotos();
-          return;
-        }
-    }
-    if(autoCaptureStartTime==0){
-      //开始拍摄
-      autoCaptureStartTime = Date.now();
-      photos.length = 0;
-      this.setData({ tipStart: "停止" });
-      page.setData({ create_disable: true});
-    }
-    console.log("开始拍照");
+    //禁止拍照按钮
+    page.setData({ btnDisabled: true});
     cameraContext.takePhoto({
       quality: 'normal',
       success: (res) => {
-        console.log("拍照结果:", res.tempImagePath);
-        photos.push(res.tempImagePath);
-        //继续拍摄下一张
-        setTimeout(page.startAutoCapture, 200);
+        console.log(new Date(), "拍照结果:", res.tempImagePath);
+        page.addPhotosToList(res.tempImagePath, function(){
+          page.setData({ btnDisabled: false });
+        });
       },
       fail: function (res) {
-        autoCaptureStartTime = 0;
-        this.setData({ tipStart: "开始" });
-        page.setData({ create_disable: false });
+        page.setData({ btnDisabled: false });
         wx.showModal({
           title: '错误',
-          content: '拍照失败!'+JSON.stringify(res),
+          content: '拍照失败!' + JSON.stringify(res),
         });
       }
     });
-  },
-  stopAutoCapture:function(){
-    startCounter = -1;
-    autoCaptureStartTime = 0;
-    this.setData({ mdisable: false, tipStart: "开始" });
-    if(photos.length==0){
-      wx.showToast({
-        title: '没有拍摄照片',
-        icon: 'none',
-      });
-      this.setData({ create_disable: false });
-    }else if(photos.length==1){
-      wx.showToast({
-        title: '至少拍摄两张照片',
-        icon: 'none',
-      });
-      this.setData({ create_disable: false });
-    }else{
-      this.createGifFromPhotos();
-    }
-  },
-  fnStart: function(){
-    var page = this;
-    if (this.data.mode==MOD_AUTO){
-      //autoCaptureStartTime
-      if (startCounter==0){
-        //正在自动拍照，点击停止
-        page.stopAutoCapture();
-      }else if (startCounter==-1){
-        startCounter = 3;
-        //开始倒计时
-        this.setData({ mdisable: 'true', tipStart: "摆好姿势!3s" });
-        setTimeout(this.fnCount, 1000);
-      }else{
-        //正在倒计时不做操作
-      }
-    }else{
-      //手动模式, 点击拍照
-      //拍照时禁用按钮
-      wx.showLoading({
-        title: "正在拍摄照片...",
-        mask: true,
-      });
-      page.setData({ adisable:true, btnDisabled: true});
-      page.takePhoto(function(){
-        page.setData({ image_count: app.globalData.gifHelper.count(), adisable:false, btnDisabled: false });
-        wx.hideLoading();
-      });
-    }
-  },
-  modeChange: function(e){
-    console.log("modeChange", e);
-    let value = e.detail.value;
-    //清空添加的图片
-    app.globalData.gifHelper.clear();
-    if (value =='auto'){
-      this.setData({ image_count: 0, mode:MOD_AUTO, tip: autoTip, tipStart: txtStart});
-    }else{
-      this.setData({ image_count: 0, mode: MOD_MANUAL, tip: manualTip, tipStart: txtCpature});
-    }
   },
   //事件处理函数
   bindFpsChange: function(res) {
-    console.log(res);
+    this.setData({ fps_id: res.detail.value });
     this.setData({fps: this.data.fpsArray[res.detail.value].replace('/秒', '')});
   },
   onLoad: function () {
-    console.log("onLoad....");
+    console.log(new Date(), "onLoad....");
     canvasContext = wx.createCanvasContext('canvas');
     cameraContext = wx.createCameraContext();
   }
