@@ -1,21 +1,19 @@
 <!--index.wxml-->
-<canvas style="margin:-100vw 0px 0px 0px;width: 100vw; height: 100vw;" canvas-id="canvas"></canvas>
+<canvas style="margin:-200px 0px 0px 0px;width: 200px; height: 200px;" canvas-id="canvas"></canvas>
 <camera flash='off' device-position="{{cam_position}}" id="camera" style='width:100vw; height:100vw'></camera>
 
 <!-- 模式切换 -->
-<text id='tip' class='horizontal_center pt10' style="color:#888;font-size:15px;">{{tip}}</text>
-<radio-group class="radio-group horizontal_center p10" bindchange="modeChange">
-  <picker class="picker" mode="selector" bindchange="bindFpsChange" range="{{fpsArray}}">
-    <text class='picker_text'>{{fps}}</text>
+<text id='tip' class='horizontal_center p5' style="color:#888;font-size:12px;">点击拍照按钮添加照片</text>
+<view class="horizontal_center">
+  <picker class="picker" mode="selector" value="{{fps_id}}" bindchange="bindFpsChange" range="{{fpsArray}}">
+    <view class='picker_text_parent'><text class='picker_text'>{{fps}}</text><view class='arrow-down' /></view>
   </picker>
-  <label class="radio" style="padding:10px;"><radio disabled="{{adisable}}" value="auto" checked="true"/>自动模式</label>
-  <label class="radio" style='padding:10px;'><radio disabled="{{mdisable}}" value="manual" />手动模式</label>
-  <image bindtap="changeCamera" class="reload" src='/static/reload.png'></image>
-</radio-group>
-<view class="horizontal_center">
-<button class='btn1' disabled="{{btnDisabled}}" bindtap='fnStart'>{{tipStart}}</button>
-<button disabled="{{create_disable}}" bindtap='createGif' class='btn2'>生成</button>
+  <button bindtap='createGif' class='make'>制作</button>
+  <button class='btn1' disabled='{{btnDisabled}}' bindtap='takePhoto'>拍照</button>
+  <image bindtap='clearImage' src='/static/trash.png' class='trash'></image>
+  <image bindtap='chooseImage'  class="album" src='/static/album.png'></image>
+  <image bindtap="changeCamera" class="reload" src='/static/campos.png'></image>
 </view>
-<view class="horizontal_center">
-<text class='circle'>已添加{{image_count}}张照片</text>
-</view>
+<scroll-view scroll-x style='display: flex; margin-left:8px;margin-right:8px; white-space: nowrap;'>
+ <image class="photo" wx:for="{{photos}}" wx:key="image" wx:for-item="item" src='{{item.path}}'></image>
+</scroll-view>
