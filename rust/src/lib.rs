@@ -63,7 +63,7 @@ fn create(width:u16, height:u16, fps: u16) -> String{
             js!{
                 wx.showLoading({
                     title: "GIF制作中(" + @{count} + "/" + @{total} + ")",
-                    mask: true,
+                    mask: false,
                 });
             };
             let decoder = png::Decoder::new(image.as_slice());

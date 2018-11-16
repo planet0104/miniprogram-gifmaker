@@ -7,6 +7,7 @@ const IMAGE_HEIGHT = 200.0;
 var canvasContext;
 var cameraContext;
 var photos = [];
+var gifHelper;
 
 Page({
   data: {
@@ -19,6 +20,14 @@ Page({
     photos: []
   },
   createGif: function(){
+    if(!gifHelper){
+      wx.showModal({
+        title: '错误',
+        content: '初始化失败！',
+      });
+      return;
+    }
+
     var page = this;
     let count = photos.length;
     if(count <= 1){
@@ -32,16 +41,16 @@ Page({
       var makeCount = -1;
       wx.showLoading({
         title: "GIF制作中...",
-        mask: true,
+        mask: false,
       });
-      app.globalData.gifHelper.clear();
+      gifHelper.clear();
       var cb1;
       var cb = function () {
         makeCount += 1;
         if(makeCount==count){
           //所有图片添加完成, 开始制作
           console.log(new Date(), "所有图片添加完成, 开始制作gif...");
-          let imageStr = app.globalData.gifHelper.create(IMAGE_WIDTH, IMAGE_HEIGHT, parseInt(page.data.fps.replace('帧', '')));
+          let imageStr = gifHelper.create(IMAGE_WIDTH, IMAGE_HEIGHT, parseInt(page.data.fps.replace('帧', '')));
           console.log(new Date(), "制作gif结束:", imageStr);
           //保存制作完成的gif
           const arrayBuffer = wx.base64ToArrayBuffer(imageStr);
@@ -53,15 +62,24 @@ Page({
           let filePath = `${wx.env.USER_DATA_PATH}/` + 'create'+Date.now()+'.gif';
           console.log(new Date(), "开始保存临时文件...", filePath, arrayBuffer);
           try{
-            let res = fsm.writeFileSync(filePath, arrayBuffer);
-            console.log(new Date(), new Date(), "gif创建结果:", res);
-            wx.hideLoading();
-            wx.showToast({
-              title: 'GIF制作完成',
-            });
-            wx.navigateTo({
-              url: '../preview/preview?path=' + filePath
-            });
+            let res = fsm.writeFile({filePath: filePath, data:arrayBuffer,
+            success: function(res){
+              console.log("临时文件保存成功.", res);
+              console.log(new Date(), new Date(), "gif创建结果:", res);
+              wx.hideLoading();
+              wx.showToast({
+                title: 'GIF制作完成',
+              });
+              wx.navigateTo({
+                url: '../preview/preview?path=' + filePath
+              });
+            },
+            fail: function (res){
+                console.log("临时文件保存失败.", res);
+            },
+            complete: function(res){
+              console.log("临时文件保存complete.", res);
+            }});
           }catch(e){
             wx.showModal({
               title: '错误',
@@ -81,7 +99,7 @@ Page({
           encoding: "base64",
           success: function (res) {
             console.log(new Date(), "base64照片读取结果:", res);
-            console.log(new Date(), "gifHelper.add:", app.globalData.gifHelper.add(res.data));
+            console.log(new Date(), "gifHelper.add:", gifHelper.add(res.data));
             cb1();
           },
           fail: function (err) {
@@ -148,6 +166,13 @@ Page({
   },
   //从相册选择照片
   chooseImage: function(){
+    if (!gifHelper) {
+      wx.showModal({
+        title: '错误',
+        content: '初始化失败！',
+      });
+      return;
+    }
     var page = this;
     wx.chooseImage({
       sizeType: ['original', 'compressed'],
@@ -180,6 +205,27 @@ Page({
     }
   },
   takePhoto: function(){
+    // if (gifHelper == null) {
+    //   var tool = require("../../gif_helper.js");
+    //   wx.showToast({
+    //     title: '正在初始化',
+    //   });
+    //   tool.then(function (helper) {
+    //     console.log("tool.then>>>>>>>>>>>>>");
+    //     gifHelper = helper;
+    //     wx.showToast({ title: '初始化成功' });
+    //     console.log("wasm编译成功");
+    //   });
+    // }
+
+
+    if (!gifHelper) {
+      wx.showModal({
+        title: '错误',
+        content: '初始化失败！',
+      });
+      return;
+    }
     var page = this;
     //禁止拍照按钮
     page.setData({ btnDisabled: true});
@@ -204,6 +250,22 @@ Page({
   bindFpsChange: function(res) {
     this.setData({ fps_id: res.detail.value });
     this.setData({fps: this.data.fpsArray[res.detail.value].replace('/秒', '')});
+  },
+  onShow: function(){
+    console.log("onshow>>>>>>>>>>>>>");
+    var a = function(){
+      var tool = require("../../gif_helper.js");
+      wx.showToast({
+        title: '正在初始化',
+      });
+      tool.then(function (helper) {
+        console.log("tool.then>>>>>>>>>>>>>");
+        gifHelper = helper;
+        wx.showToast({ title: '初始化成功' });
+        console.log("wasm编译成功");
+      });
+    };
+    setTimeout(a, 3000);
   },
   onLoad: function () {
     console.log(new Date(), "onLoad....");
