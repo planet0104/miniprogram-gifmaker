@@ -4,6 +4,7 @@
     "pages/logs/logs",
     "pages/preview/preview"
   ],
+  "workers": "workers",
   "window":{
     "backgroundTextStyle":"light",
     "navigationBarBackgroundColor": "#fff",
