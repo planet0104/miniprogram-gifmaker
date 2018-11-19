@@ -4,6 +4,8 @@ const app = getApp()
 const IMAGE_WIDTH = 200.0;
 const IMAGE_HEIGHT = 200.0;
 
+require("../../ministdweb.js");
+
 var giflib = require("../../gif.js");
 
 var gif;
