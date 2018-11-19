@@ -1,0 +1,109 @@
+<html>
+    <head>
+        <meta charset="utf-8" />
+    </head>
+<body>
+        <script src="gif.js"></script>
+    <img id="img1" onload="img1Load=true; check()" src="1.jpg" />
+    <img id="img2" onload="img2Load=true; check()" src="2.jpg" /> <br />
+    <canvas width="100" height="100" id="myCanvas"></canvas>
+    <img id="image" />
+<script>
+
+    var img1Load = false;
+    var img2Load = false;
+
+function check(){
+    if(!img1Load || !img2Load){
+        return;
+    }
+    
+
+    var gif = new GIF({
+        quality: 10
+        });
+
+// add an image element
+gif.addFrame(document.getElementById("img1"), {delay: 200});
+
+// or a canvas element
+gif.addFrame(document.getElementById("img2"), {delay: 200});
+
+// or copy the pixels from a canvas context
+// gif.addFrame(ctx, {copy: true});
+
+gif.on('finished', function(array) {
+    console.log("finished:", array);
+    var data = transformArrayBufferToBase64(array);
+
+    console.log(data);
+
+    document.getElementById("image").src = "data:image/gif;base64,"+data;
+    //window.open(URL.createObjectURL(blob));
+});
+console.log("开始render");
+gif.render();
+console.log("render结束");
+/*
+return;
+
+    var canvas = document.getElementById("myCanvas");
+    var cxt = canvas.getContext('2d');
+    cxt.drawImage(document.getElementById("img1"), 0, 0, 100, 100);
+
+    var imageData = cxt.getImageData(0, 0, 100, 100);
+    var data = imageData.data;
+    var img1_pixels = [];
+    for(var i = 0, n = data.length; i < n; i += 4) {
+        var red = data[i];
+        var green = data[i + 1];
+        var blue = data[i + 2];
+        var alpha = data[i + 3];
+        img1_pixels.push(closest(red, green, blue));
+    }
+
+    cxt.fillStyle="#0000ff";
+    cxt.drawImage(document.getElementById("img2"), 0, 0, 100, 100);
+    var imageData = cxt.getImageData(0, 0, 100, 100);
+    var data = imageData.data;
+    var img2_pixels = [];
+    for(var i = 0, n = data.length; i < n; i += 4) {
+        var red = data[i];
+        var green = data[i + 1];
+        var blue = data[i + 2];
+        var alpha = data[i + 3];
+        img2_pixels.push(closest(red, green, blue));
+    }
+
+    var buf = new Uint8Array(1024 * 1024);
+  var width = 100;
+  var height = 100;
+  var gf = new GifWriter(buf, width, height, {loop: 0});
+  gf.addFrame(0, 0, width, height,
+              img1_pixels,
+              {palette: set, delay: 100});
+  gf.addFrame(0, 0, width, height,
+                img2_pixels,
+              {palette: set,
+               delay: 100});  // Delay in hundredths of a sec (100 = 1s).
+    var file = buf.slice(0, gf.end());
+    
+        data = transformArrayBufferToBase64(gen_anim());
+
+        console.log(data);
+
+        document.getElementById("image").src = "data:image/gif;base64,"+data;
+        */
+}
+
+
+function transformArrayBufferToBase64 (bytes) {
+    var binary = '';
+    for (var len = bytes.byteLength, i = 0; i < len; i++) {
+        binary += String.fromCharCode(bytes[i]);
+    }
+    return window.btoa(binary);
+}
+</script>
+</body>
+</html>

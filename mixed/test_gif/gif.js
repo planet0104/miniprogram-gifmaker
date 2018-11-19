@@ -20,27 +20,203 @@ function extend(child, parent) {
 }
 
 var hasProp = {}.hasOwnProperty;
-// var indexOf = [].indexOf ||
-//   function (item) {
-//     for (var i = 0,
-//       l = this.length; i < l; i++) {
-//       if (i in this && this[i] === item) return i
-//     }
-//     return - 1
-//   };
-// var slice = [].slice;
+var indexOf = [].indexOf ||
+  function (item) {
+    for (var i = 0,
+      l = this.length; i < l; i++) {
+      if (i in this && this[i] === item) return i
+    }
+    return - 1
+  };
+var slice = [].slice;
 
-var EventEmitter = require("event.js");
+function EventEmitter() {
+  this._events = this._events || {};
+  this._maxListeners = this._maxListeners || undefined
+}
+
+EventEmitter.EventEmitter = EventEmitter;
+EventEmitter.prototype._events = undefined;
+EventEmitter.prototype._maxListeners = undefined;
+EventEmitter.defaultMaxListeners = 10;
+EventEmitter.prototype.setMaxListeners = function (n) {
+  if (!isNumber(n) || n < 0 || isNaN(n)) throw TypeError("n must be a positive number");
+  this._maxListeners = n;
+  return this
+};
+EventEmitter.prototype.emit = function (type) {
+  var er, handler, len, args, i, listeners;
+  if (!this._events) this._events = {};
+  if (type === "error") {
+    if (!this._events.error || isObject(this._events.error) && !this._events.error.length) {
+      er = arguments[1];
+      if (er instanceof Error) {
+        throw er
+      } else {
+        var err = new Error('Uncaught, unspecified "error" event. (' + er + ")");
+        err.context = er;
+        throw err
+      }
+    }
+  }
+  handler = this._events[type];
+  if (isUndefined(handler)) return false;
+  if (isFunction(handler)) {
+    switch (arguments.length) {
+      case 1:
+        handler.call(this);
+        break;
+      case 2:
+        handler.call(this, arguments[1]);
+        break;
+      case 3:
+        handler.call(this, arguments[1], arguments[2]);
+        break;
+      default:
+        args = Array.prototype.slice.call(arguments, 1);
+        handler.apply(this, args)
+    }
+  } else if (isObject(handler)) {
+    args = Array.prototype.slice.call(arguments, 1);
+    listeners = handler.slice();
+    len = listeners.length;
+    for (i = 0; i < len; i++) listeners[i].apply(this, args)
+  }
+  return true
+};
+EventEmitter.prototype.addListener = function (type, listener) {
+  var m;
+  if (!isFunction(listener)) throw TypeError("listener must be a function");
+  if (!this._events) this._events = {};
+  if (this._events.newListener) this.emit("newListener", type, isFunction(listener.listener) ? listener.listener : listener);
+  if (!this._events[type]) this._events[type] = listener;
+  else if (isObject(this._events[type])) this._events[type].push(listener);
+  else this._events[type] = [this._events[type], listener];
+  if (isObject(this._events[type]) && !this._events[type].warned) {
+    if (!isUndefined(this._maxListeners)) {
+      m = this._maxListeners
+    } else {
+      m = EventEmitter.defaultMaxListeners
+    }
+    if (m && m > 0 && this._events[type].length > m) {
+      this._events[type].warned = true;
+      console.error("(node) warning: possible EventEmitter memory " + "leak detected. %d listeners added. " + "Use emitter.setMaxListeners() to increase limit.", this._events[type].length);
+      if (typeof console.trace === "function") {
+        console.trace()
+      }
+    }
+  }
+  return this
+};
+EventEmitter.prototype.on = EventEmitter.prototype.addListener;
+EventEmitter.prototype.once = function (type, listener) {
+  if (!isFunction(listener)) throw TypeError("listener must be a function");
+  var fired = false;
+  function g() {
+    this.removeListener(type, g);
+    if (!fired) {
+      fired = true;
+      listener.apply(this, arguments)
+    }
+  }
+  g.listener = listener;
+  this.on(type, g);
+  return this
+};
+EventEmitter.prototype.removeListener = function (type, listener) {
+  var list, position, length, i;
+  if (!isFunction(listener)) throw TypeError("listener must be a function");
+  if (!this._events || !this._events[type]) return this;
+  list = this._events[type];
+  length = list.length;
+  position = -1;
+  if (list === listener || isFunction(list.listener) && list.listener === listener) {
+    delete this._events[type];
+    if (this._events.removeListener) this.emit("removeListener", type, listener)
+  } else if (isObject(list)) {
+    for (i = length; i-- > 0;) {
+      if (list[i] === listener || list[i].listener && list[i].listener === listener) {
+        position = i;
+        break
+      }
+    }
+    if (position < 0) return this;
+    if (list.length === 1) {
+      list.length = 0;
+      delete this._events[type]
+    } else {
+      list.splice(position, 1)
+    }
+    if (this._events.removeListener) this.emit("removeListener", type, listener)
+  }
+  return this
+};
+EventEmitter.prototype.removeAllListeners = function (type) {
+  var key, listeners;
+  if (!this._events) return this;
+  if (!this._events.removeListener) {
+    if (arguments.length === 0) this._events = {};
+    else if (this._events[type]) delete this._events[type];
+    return this
+  }
+  if (arguments.length === 0) {
+    for (key in this._events) {
+      if (key === "removeListener") continue;
+      this.removeAllListeners(key)
+    }
+    this.removeAllListeners("removeListener");
+    this._events = {};
+    return this
+  }
+  listeners = this._events[type];
+  if (isFunction(listeners)) {
+    this.removeListener(type, listeners)
+  } else if (listeners) {
+    while (listeners.length) this.removeListener(type, listeners[listeners.length - 1])
+  }
+  delete this._events[type];
+  return this
+};
+EventEmitter.prototype.listeners = function (type) {
+  var ret;
+  if (!this._events || !this._events[type]) ret = [];
+  else if (isFunction(this._events[type])) ret = [this._events[type]];
+  else ret = this._events[type].slice();
+  return ret
+};
+EventEmitter.prototype.listenerCount = function (type) {
+  if (this._events) {
+    var evlistener = this._events[type];
+    if (isFunction(evlistener)) return 1;
+    else if (evlistener) return evlistener.length
+  }
+  return 0
+};
+EventEmitter.listenerCount = function (emitter, type) {
+  return emitter.listenerCount(type)
+};
+function isFunction(arg) {
+  return typeof arg === "function"
+}
+function isNumber(arg) {
+  return typeof arg === "number"
+}
+function isObject(arg) {
+  return typeof arg === "object" && arg !== null
+}
+function isUndefined(arg) {
+  return arg === void 0
+}
 
 var GIF = function (superClass) {
   var defaults, frameDefaults;
   extend(GIF, superClass);
   defaults = {
-    workerScript: "workers/gif.worker.js",
+    workerScript: "gif.worker.js",
     workers: 1,
     repeat: 0,
     background: "#fff",
-    quality: 1,
+    quality: 10,
     width: null,
     height: null,
     transparent: null,
@@ -178,52 +354,44 @@ var GIF = function (superClass) {
       }
       return results
     }).apply(this).forEach(function (_this) {
-      //console.log("apply(this).forEach(function (_this) {", _this);
       return function (i) {
         var worker;
-        //console.log("spawning worker " + i + " _this=", _this);
-        worker = wx.createWorker(_this.options.workerScript);
-        var _that = _this;
-        worker.onMessage(function (event) {
-          //console.log("worker.onMessage(function (msg) {", event.data, "_that=", _that);
-          if (event.data == "init") {
-            //console.log("gif.js init start. _that=", _that, "_that.options=", _that.options, "_that.options.globalPalette", _that.options.globalPalette);
-            if (_that.options.globalPalette === true) {
-              _that.renderNextFrame()
+        //console.log("spawning worker " + i);
+        worker = new Worker(_this.options.workerScript);
+        worker.onmessage = function (msg) {
+          var msg = msg.data;
+          if (msg == "init") {
+            //console.log("gif.js init start.");
+            if (_this.options.globalPalette === true) {
+              _this.renderNextFrame()
             } else {
               for (i = j = 0, ref = numWorkers; 0 <= ref ? j < ref : j > ref; i = 0 <= ref ? ++j : --j) {
-                _that.renderNextFrame()
+                _this.renderNextFrame()
               }
             }
             //console.log("gif.js init start>>1");
-            _that.emit("start");
+            _this.emit("start");
             //console.log("gif.js init start>>2");
-            _that.emit("progress", 0);
+            _this.emit("progress", 0);
             //console.log("gif.js init start>>3");
             return;
           }
-          //console.log("gif.js before return frameFinished>00", event.data, "_this=", _this);
-          _that.activeWorkers.splice(_that.activeWorkers.indexOf(worker), 1);
-          //console.log("gif.js before return frameFinished>01");
-          _that.freeWorkers.push(worker);
-          //console.log("gif.js before return frameFinished>02");
-          return _that.frameFinished(event.data)
-        });
+          //console.log("gif.js before return frameFinished", msg);
+          _this.activeWorkers.splice(_this.activeWorkers.indexOf(worker), 1);
+          _this.freeWorkers.push(worker);
+          return _this.frameFinished(msg)
+        };
         return _this.freeWorkers.push(worker)
       }
     }(this));
     return numWorkers
   };
   GIF.prototype.frameFinished = function (frame) {
-    //console.log("gif.js GIF.prototype.frameFinished>01");
     var i, j, ref;
-    //console.log("gif.js GIF.prototype.frameFinished>02");
     //console.log("frame " + frame.index + " finished - " + this.activeWorkers.length + " active");
-    //console.log("gif.js GIF.prototype.frameFinished>03");
     this.finishedFrames++;
     this.emit("progress", this.finishedFrames / this.frames.length);
     this.imageParts[frame.index] = frame;
-    //console.log("gif.js GIF.prototype.frameFinished>04");
     if (this.options.globalPalette === true) {
       this.options.globalPalette = frame.globalPalette;
       //console.log("global palette analyzed");
@@ -233,7 +401,7 @@ var GIF = function (superClass) {
         }
       }
     }
-    if (this.imageParts.indexOf(null) >= 0) {
+    if (indexOf.call(this.imageParts, null) >= 0) {
       return this.renderNextFrame()
     } else {
       return this.finishRendering()
@@ -285,7 +453,7 @@ var GIF = function (superClass) {
     task = this.getTask(frame);
     //console.log("starting frame " + (task.index + 1) + " of " + this.frames.length);
     this.activeWorkers.push(worker);
-    return worker.postMessage({data:task})
+    return worker.postMessage(task)
   };
   GIF.prototype.getContextData = function (ctx) {
     return ctx.getImageData(0, 0, this.options.width, this.options.height).data
@@ -332,5 +500,10 @@ var GIF = function (superClass) {
   };
   return GIF
 }(EventEmitter);
-module.exports.GIF = GIF;
-module.exports.ImageData = ImageData;
+try{
+  module.exports.GIF = GIF;
+  module.exports.ImageData = ImageData;
+}catch(e){
+  console.log(e);
+}
+

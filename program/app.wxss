@@ -35,28 +35,36 @@
   padding-top: 5px;
 }
 
-.reload{
-  right: 8px;
-  position: absolute;
-  width:30px;
-  height:30px;
+.tp10{
+  padding-top: 10px;
+}
+
+.reload,.album,.trash{
+  width:22px;
+  height:22px;
+  padding: 5px;
+  border-radius: 17px;
+  background: white;
+  border: 1px solid #c6c6c6; 
   margin-top: 27px;
+  position: absolute;
+}
+
+.reload{
+  right: 10px;
 }
 
 .album{
-  right: 45px;
-  position: absolute;
-  width:30px;
-  height:30px;
-  margin-top: 27px;
+  right: 48px;
 }
 
 .trash{
-  position: absolute;
-  right: 82px;
+  right: 86px;
   margin-top: 27px;
-  height: 28px;
-  width: 28px;
+}
+.trash:active, .album:active, .reload:active{
+  background: eee;
+  border: 2px solid #c6c6c6; 
 }
 
 .photo{
@@ -84,33 +92,38 @@
 }
 .picker_text_parent{
   border: 1px solid #c6c6c6; 
-  border-radius: 10px;
+  border-radius: 18px;
   display: flex;
-  width:56px;
-  height: 30px;
+  width:34px;
+  height: 34px;
   align-items: center;
   justify-content: center;  
 }
 .picker{
-  left: 5px;
+  left: 10px;
   position: absolute;
   margin-top: 27px;
 }
 
 .make{
   position: absolute;
-  left: 68px;
+  left: 52px;
   margin-top: 27px;
-  font-size: 15px;
-  padding-bottom: 3px;
+  font-size: 13px;
   border: 1px solid #c6c6c6; 
-  border-radius: 10px;
+  border-radius: 19px;
   display: flex;
   padding: 0px;
-  height: 32px;
-  width: 45px;
+  height: 36px;
+  background: #fff;
+  color: black;
+  width: 36px;
   align-items: center;
   justify-content: center;  
+}
+
+.make1{
+  left: 98px;
 }
 
 .gif{
@@ -122,17 +135,23 @@
 }
 
 .btn1{
-  width:70px;
-  height: 70px;
+  width:74px;
+  height: 74px;
   margin: 10px;
-  border: 2px solid #c6c6c6; 
-  border-radius: 35px;
+  border: 1px solid #c6c6c6; 
+  border-radius: 37px;
+  line-height: 1.428571429;
   display: flex;
+  background: #fff;
   margin-top: 10px;
   align-items: center;
   font-size: 18px;
   justify-content: center;  
   text-align: center;
+}
+.btn1:active, .make:active{
+  background: #eee;
+  color: #000;
 }
 
 .btn2{

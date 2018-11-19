@@ -3,12 +3,13 @@
 <camera flash='off' device-position="{{cam_position}}" id="camera" style='width:100vw; height:100vw'></camera>
 
 <!-- 模式切换 -->
-<text id='tip' class='horizontal_center p5' style="color:#888;font-size:12px;">点击拍照按钮添加照片</text>
+<text id='tip' class='horizontal_center tp10' style="color:#888;font-size:13px;">{{tool_tip}}</text>
 <view class="horizontal_center">
   <picker class="picker" mode="selector" value="{{fps_id}}" bindchange="bindFpsChange" range="{{fpsArray}}">
-    <view class='picker_text_parent'><text class='picker_text'>{{fps}}</text><view class='arrow-down' /></view>
+    <view class='picker_text_parent'><text class='picker_text'>{{fps}}</text></view>
   </picker>
-  <button bindtap='createGif' class='make'>制作</button>
+  <text bindtap='createGif' class='make'>制作</text>
+  <text bindtap='createGif1' class='make make1'>预览</text>
   <button class='btn1' disabled='{{btnDisabled}}' bindtap='takePhoto'>拍照</button>
   <image bindtap='clearImage' src='/static/trash.png' class='trash'></image>
   <image bindtap='chooseImage'  class="album" src='/static/album.png'></image>
