@@ -9,6 +9,7 @@
 		"postcss": true,
 		"minified": true,
 		"newFeature": true,
+		"autoAudits": false,
 		"uglifyFileName": false
 	},
 	"compileType": "miniprogram",

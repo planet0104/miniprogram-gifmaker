@@ -1,0 +1,16 @@
+[package]
+name = "ministdweb"
+version = "0.1.0"
+authors = ["Jia Ye <planet0104@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+stdweb = "0.4.10"
+gif = "0.10.1"
+
+[profile.release]
+lto = true
+opt-level = 's'
+panic = 'abort'
+#opt-level = 's'
+#panic = 'abort'
