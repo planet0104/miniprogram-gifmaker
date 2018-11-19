@@ -735,14 +735,14 @@ function renderFrame(frame) {
       }
       return results
     }();
-    return worker.postMessage({data:frame, transfer:transfer})
+    return self.postMessage(frame, transfer)
   } else {
-    return worker.postMessage({data:frame})
+    return self.postMessage(frame)
   }
 };
-worker.onMessage(function (event) {
+self.onmessage = function (event) {
   return renderFrame(event.data)
-});
+};
 //console.log("gif.worker.js init.>>>>>>>>>>>>>>>>>>>>>>>");
-worker.postMessage({data:"init"});
+self.postMessage("init");
 //console.log("gif.worker.js init send.>>>>>>>>>>>>>>>>>>>>>>>>>>>");
