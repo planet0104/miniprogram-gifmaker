@@ -1,43 +1,22 @@
 //index.js
 //获取应用实例
-const app = getApp();
+const app = getApp()
+const IMAGE_WIDTH = 200.0;
+const IMAGE_HEIGHT = 200.0;
 
-const worker = wx.createWorker('workers/ministdweb.js');
+require("../../ministdweb.js");
 
-var finishGifPath;
-var tipId = 0;
+var giflib = require("../../gif.js");
 
-var imageSize = 80;
-var prompt;
-var textColor = 'white';
-
-var textColors = ['white', 'black', 'red', 'yellow', 'green', 'blue'];
-
-worker.onMessage(function (msg) {
-  console.log("主线程收到消息:", msg);
-});
-
+var gif;
 var do_preview = false;
-var text = "";
-var bindText = "";
 
 var canvasContext;
 var cameraContext;
 var photos = [];
+var dataMap = new Map();
 
 Page({
-  showInputText: function(){
-    this.setData({ isInputTextHidden: false });
-  },
-  bindText: function(e){
-    bindText = e.detail.value;
-  },
-  setText: function(){
-    text = bindText;
-    console.log("文本:", text);
-    this.setData({ isInputTextHidden: true});
-    this.clearImage();
-  },
   onShareAppMessage: function (res) {
     return {
       title: '大头贴动画制作',
@@ -49,7 +28,7 @@ Page({
     //console.log("showLoading title=", title);
     wx.showLoading({
       title: title,
-      mask: false,
+      mask: true,
     });
   },
   showError: function(msg){
@@ -59,35 +38,26 @@ Page({
     });
   },
   data: {
-    redTipHidden: false,
-    isInputTextHidden: true,
     cam_position: '前置',
     btnDisabled: false,
     image_count: 0,
     fps: '3帧',
     fps_id: 2,
     fpsArray: ['1帧/秒', '2帧/秒', '3帧/秒', '4帧/秒', '5帧/秒', '6帧/秒', '7帧/秒', '8帧/秒', '9帧/秒', '10帧/秒', '11帧/秒', '12帧/秒'],
-    imgSize: '80px',
-    imgSizeId: 1,
-    imgSizeArray: ["图宽50px", "图宽80px", "图宽100px", "图宽150px", "图宽200px", "图宽250px", "图宽300px", "图宽350px"],
-    textColorId: 0,
-    textColor: '白色',
-    textColorArray: ['白色', '黑色', '红色', '黄色', '绿色', '蓝色'],
     photos: [],
     tool_tip: '点击拍照按钮添加照片'
   },
   createGif1: function(){
-    //如果已经生成过gif，直接预览
-    if(finishGifPath){
-        wx.previewImage({
-          urls: [finishGifPath]
-        });
-      return;
-    }
     do_preview = true;
     this.createGif();
   },
   createGif: function(){
+    if(gif){
+      gif.destory();
+    }
+    gif = new giflib.GIF({
+      quality: 1
+    });
     var page = this;
     let count = photos.length;
     if(count <= 1){
@@ -101,28 +71,25 @@ Page({
       var makeCount = -1;
       page.showLoading("GIF制作中...");
 
-      worker.onMessage(function (msg) {
-        if(msg.what == "progress"){
-          page.showLoading("GIF制作中(" + msg.arg0 + "/" + msg.arg1 + ")");
-          return;
-        }
-        console.log("GIF制作完成:", msg);
-        const fileData = new Uint8Array(msg.obj);
+      gif.on('finished', function (array) {
         //保存制作完成的gif
         let fsm = wx.getFileSystemManager();
         page.showLoading("保存临时文件...");
         let filePath = `${wx.env.USER_DATA_PATH}/` + 'create' + Date.now() + '.gif';
         try {
           let res = fsm.writeFile({
-            filePath: filePath, data: fileData.buffer,
+            filePath: filePath, data: array.buffer,
             success: function (res) {
-              finishGifPath = filePath;
-              if (do_preview) {
+              wx.hideLoading();
+              // wx.showToast({
+              //   title: 'GIF制作完成',
+              // });
+              if (do_preview){
                 wx.previewImage({
                   urls: [filePath]
                 });
                 do_preview = false;
-              } else {
+              }else{
                 wx.showModal({
                   title: 'GIF动画制作完成',
                   content: "点击“预览”查看动图\r\n预览页面长按可保存或分享图片",
@@ -137,44 +104,37 @@ Page({
                   }
                 });
               }
+              // wx.navigateTo({
+              //   url: '../preview/preview?path=' + filePath
+              // });
             },
             fail: function (res) {
               page.showError('临时文件保存失败!' + JSON.stringify(res));
             },
             complete: function (res) {
-              wx.hideLoading();
+              //console.log("临时文件保存complete.", res);
             }
           });
         } catch (e) {
-          wx.hideLoading();
           page.showError('图片读取失败!' + JSON.stringify(e));
         }
       });
-      worker.postMessage({
-        what: "create",
-        data: new ArrayBuffer(0),
-        width: imageSize,
-        height: imageSize,
-        fps: parseInt(page.data.fps.replace('帧', ''))
+      gif.on("progress", function(progress){
+        page.showLoading("生成GIF" + Math.round(progress*100)+"%");
       });
+      //添加所有图片数据
+      var total = photos.length;
+      photos.forEach(function(item, index){
+        page.showLoading("添加图片"+(index+1)+"/"+total);
+        gif.addFrame(dataMap.get(item.path), { delay: 1000/parseInt(page.data.fps.replace('帧', '')) });
+      });
+      gif.render();
     }
   },
   clearImage: function(){
-    var page = this;
-    page.showLoading("清除图片");
-    worker.onMessage(function (msg) {
-      console.log("图片已清除:", msg);
-      photos.length = 0;
-      page.setData({ photos: photos });
-      wx.hideLoading();
-    });
-    worker.postMessage({
-      what: "clear",
-      data: new ArrayBuffer(0),
-      width: 0,
-      height: 0,
-      fps: 0
-    });
+    photos.length = 0;
+    dataMap.clear();
+    this.setData({ photos: photos });
   },
   addPhotosToList:function(path, cb){
     var page = this;
@@ -183,39 +143,32 @@ Page({
     wx.getImageInfo({
       src: path,
       success(res) {
-        let width = imageSize;
-        let height = imageSize / res.width * res.height;
-        let top = (imageSize - height) / 2;
+        let width = IMAGE_WIDTH;
+        let height = IMAGE_HEIGHT / res.width * res.height;
+        let top = (IMAGE_WIDTH - height) / 2;
         canvasContext.drawImage(path, 0, top, width, height);
-        canvasContext.setFillStyle(textColor);
-        //canvasContext.setStrokeStyle(textColor);
-        canvasContext.setFontSize(imageSize/8);
-        canvasContext.fillText(text, 10, imageSize-(imageSize/7), imageSize);
-        //canvasContext.strokeText("我很惊讶", 10, imageSize - (imageSize / 8), imageSize);
         canvasContext.draw(false, function () {
           //提取图片
           wx.canvasGetImageData({
             canvasId: 'canvas',
             x: 0,
             y: 0,
-            width: imageSize,
-            height: imageSize,
+            width: IMAGE_WIDTH,
+            height: IMAGE_HEIGHT,
             success(res) {
-              console.log("canvasGetImageData", res);
-              worker.onMessage(function (msg) {
-                //console.log("图片添加成功:", msg);
-                photos.push({ path: path });
-                page.setData({ photos: photos });
-                wx.hideLoading();
-                cb();
-              });
-              worker.postMessage({
-                what: "add",
-                data: res.data.buffer,
-                width: 0,
-                height: 0,
-                fps: 0
-              });
+              var imgData = new giflib.ImageData();
+              imgData.width = res.width;
+              imgData.height = res.height;
+              imgData.data = res.data;
+              // console.log(res.width) // 100
+              // console.log(res.height) // 100
+              // console.log(res.data instanceof Uint8ClampedArray) // true
+              // console.log(res.data.length) // 100 * 100 * 4
+              photos.push({ path: path});
+              dataMap.set(path, imgData);
+              page.setData({ photos: photos });
+              wx.hideLoading();
+              cb();
             },
             fail: function (err) {
               cb();
@@ -271,22 +224,7 @@ Page({
         page.addPhotosToList(res.tempImagePath, function(){
           page.setData({ btnDisabled: false });
         });
-        var strs = [
-          '微微移动相机、加快连拍速度、调高帧率，使动画更流畅',
-          '调低图片像素(例如50px)，加快制作速度',
-          '如果无法拍照，请退出小程序并重新进入'];
-        var change = Math.random()<0.3;
-        if (change){
-          let rand = Math.random();
-          if (rand < 0.4) {
-            tipId = 0;
-          } else if (rand > 0.4 && rand < 0.8) {
-            tipId = 1;
-          } else {
-            tipId = 2;
-          }
-        }
-        page.setData({ tool_tip: strs[tipId]});
+        page.setData({ tool_tip: '细微移动相机、加快连拍速度、调高帧率，可得到更流畅的动画'});
       },
       fail: function (res) {
         page.setData({ btnDisabled: false });
@@ -294,26 +232,10 @@ Page({
       }
     });
   },
-  closeRedTip: function(e){
-    this.setData({ redTipHidden: true });
-  },
   //事件处理函数
   bindFpsChange: function(res) {
     this.setData({ fps_id: res.detail.value });
     this.setData({fps: this.data.fpsArray[res.detail.value].replace('/秒', '')});
-  },
-  bindImgSizeChange: function(res){
-    this.clearImage();
-    imageSize = parseInt(this.data.imgSizeArray[res.detail.value].replace('图宽', '').replace('px', ''));
-    console.log("imageSize=", imageSize);
-    this.setData({ imgSizeId: res.detail.value });
-    this.setData({ imgSize: imageSize+'px' });
-  },
-  bindTextColorChange: function(res){
-    this.clearImage();
-    textColor = textColors[res.detail.value];
-    console.log("textColor=", textColor);
-    this.setData({ textColor: this.data.textColorArray[res.detail.value], textColorId: res.detail.value });
   },
   onShow: function(){
     this.setData({ btnDisabled: false });

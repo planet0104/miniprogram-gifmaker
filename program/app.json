@@ -1,8 +1,7 @@
 {
   "pages":[
     "pages/index/index",
-    "pages/logs/logs",
-    "pages/preview/preview"
+    "pages/logs/logs"
   ],
   "workers": "workers",
   "window":{

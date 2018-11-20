@@ -9,8 +9,6 @@ stdweb = "0.4.10"
 gif = "0.10.1"
 
 [profile.release]
-lto = true
+lto = true #必须加，否则asm.js编译不过
 opt-level = 's'
 panic = 'abort'
-#opt-level = 's'
-#panic = 'abort'

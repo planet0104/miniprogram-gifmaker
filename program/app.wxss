@@ -102,28 +102,41 @@
 .picker{
   left: 10px;
   position: absolute;
-  margin-top: 27px;
+  margin-top: 10px;
+}
+.picker_text_img_size{
+  font-size: 10px;
+}
+.image_size{
+  margin-top: 50px;
+}
+.text_color{
+  margin-top: 50px;
+  left: 98px;
 }
 
 .make{
   position: absolute;
   left: 52px;
-  margin-top: 27px;
+  margin-top: 10px;
   font-size: 13px;
   border: 1px solid #c6c6c6; 
-  border-radius: 19px;
+  border-radius: 18px;
   display: flex;
   padding: 0px;
-  height: 36px;
+  height: 34px;
   background: #fff;
   color: black;
-  width: 36px;
+  width: 34px;
   align-items: center;
   justify-content: center;  
 }
 
 .make1{
   left: 98px;
+}
+.make2{
+  margin-top: 50px;
 }
 
 .gif{
