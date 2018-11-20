@@ -7,4 +7,4 @@ GIF动画制作微信小程序
 <b>/program</b> 微信小程序代码
 
 
-program中的代码可以直接在微信开发工具编译运行，ministdweb.js是编译好的Rust代码。
+program中的代码可以直接在微信开发工具编译运行，/workers/ministdweb.js是编译好的Rust代码。
