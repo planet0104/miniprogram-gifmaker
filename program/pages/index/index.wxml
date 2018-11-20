@@ -1,5 +1,5 @@
 <!--index.wxml-->
-<canvas style="margin:-200px 0px 0px 0px;width: 200px; height: 200px;" canvas-id="canvas"></canvas>
+<canvas hidden="true" style="margin:-350px 0px 0px 0px;width: 350px; height: 350px;" canvas-id="canvas"></canvas>
 <camera flash='off' device-position="{{cam_position}}" id="camera" style='width:100vw; height:100vw'></camera>
 
 <!-- 模式切换 -->
@@ -10,6 +10,14 @@
   </picker>
   <text bindtap='createGif' class='make'>制作</text>
   <text bindtap='createGif1' class='make make1'>预览</text>
+
+  <picker class="picker image_size" mode="selector" value="{{imgSizeId}}" bindchange="bindImgSizeChange" range="{{imgSizeArray}}">
+    <view class='picker_text_parent'><text class='picker_text picker_text_img_size'>{{imgSize}}</text></view>
+  </picker>
+  <text bindtap='showInputText' class='make make2'>文字</text>
+  <picker class="picker text_color" mode="selector" value="{{textColorId}}" bindchange="bindTextColorChange" range="{{textColorArray}}">
+    <view class='picker_text_parent'><text class='picker_text picker_text_img_size'>{{textColor}}</text></view>
+  </picker>
   <button class='btn1' disabled='{{btnDisabled}}' bindtap='takePhoto'>拍照</button>
   <image bindtap='clearImage' src='/static/trash.png' class='trash'></image>
   <image bindtap='chooseImage'  class="album" src='/static/album.png'></image>
@@ -18,3 +26,11 @@
 <scroll-view scroll-x style='display: flex; margin-left:8px;margin-right:8px; white-space: nowrap;'>
  <image class="photo" wx:for="{{photos}}" wx:key="image" wx:for-item="item" src='{{item.path}}'></image>
 </scroll-view>
+<view hidden="{{isInputTextHidden}}" style='position: absolute;top:100vw;background:#fff;width:100%;'>
+<input bindinput="bindText" style='margin:20px;' placeholder='输入文字内容'></input>
+<button bindtap='setText' style='margin-left:20px;margin-right:20px;margin-bottom:100px;'>确定</button>
+</view>
+<view hidden="{{redTipHidden}}" style='padding-left:10px; padding-right:10px;padding-top:10px;margin-left:5px;color:#f66;font-size:15px;border: 1px solid #fbb; border-radius: 10px;'>
+<text style=''>注意：请先设置图片宽度、文字、颜色，再拍照！</text>
+<button bindtap='closeRedTip' style='font-size:13px;width:100px;margin:5px;'>关闭此提示</button>
+</view>
