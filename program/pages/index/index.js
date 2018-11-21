@@ -4,10 +4,10 @@ const app = getApp();
 
 const worker = wx.createWorker('workers/ministdweb.js');
 
-var finishGifPath;
 var tipId = 0;
+//imgSizeId对应最多图片限制
+var imgSizeMax = [100/*50px*/,64/*80px*/,36/*100px*/,20/*150px*/,12/*200px*/,8/*250px*/,6/*300px*/,4/*350px*/];
 
-var imageSize = 80;
 var prompt;
 var textColor = 'white';
 
@@ -24,8 +24,45 @@ var bindText = "";
 var canvasContext;
 var cameraContext;
 var photos = [];
+var tmpPhotos = [];
 
 Page({
+  onLoad: function () {
+    var page = this;
+    canvasContext = wx.createCanvasContext('canvas');
+    cameraContext = wx.createCameraContext();
+    let fsm = wx.getFileSystemManager();
+    let filePath = `${wx.env.USER_DATA_PATH}/` + 'app.data';
+    try {
+      let res = fsm.readFile({
+        filePath: filePath,
+        encoding: "utf8",
+        success: function (res) {
+          //console.log("临时文件读取成功", res);
+          page.setData(JSON.parse(res.data));
+          photos = page.data.photos;
+        },
+        fail: function (res) {
+          //console.log('临时文件读取失败!', res);
+        }
+      });
+    } catch (e) { }
+  },
+  onHide: function(){
+    let fsm = wx.getFileSystemManager();
+    let filePath = `${wx.env.USER_DATA_PATH}/` + 'app.data';
+    try {
+      let res = fsm.writeFile({
+        filePath: filePath, data: JSON.stringify(this.data),
+        success: function (res) {
+          //console.log("临时文件保存成功", res);
+        },
+        fail: function (res) {
+          //console.log('临时文件保存失败!', res);
+        }
+      });
+    } catch (e) {}
+  },
   showInputText: function(){
     this.setData({ isInputTextHidden: false });
   },
@@ -34,9 +71,8 @@ Page({
   },
   setText: function(){
     text = bindText;
-    console.log("文本:", text);
+    //console.log("文本:", text);
     this.setData({ isInputTextHidden: true});
-    this.clearImage();
   },
   onShareAppMessage: function (res) {
     return {
@@ -46,7 +82,6 @@ Page({
     }
   },
   showLoading: function(title){
-    //console.log("showLoading title=", title);
     wx.showLoading({
       title: title,
       mask: false,
@@ -59,7 +94,8 @@ Page({
     });
   },
   data: {
-    redTipHidden: false,
+    finishGifPath: null,
+    imageSize: 150,
     isInputTextHidden: true,
     cam_position: '前置',
     btnDisabled: false,
@@ -67,8 +103,8 @@ Page({
     fps: '3帧',
     fps_id: 2,
     fpsArray: ['1帧/秒', '2帧/秒', '3帧/秒', '4帧/秒', '5帧/秒', '6帧/秒', '7帧/秒', '8帧/秒', '9帧/秒', '10帧/秒', '11帧/秒', '12帧/秒'],
-    imgSize: '80px',
-    imgSizeId: 1,
+    imgSize: '150px',
+    imgSizeId: 3,
     imgSizeArray: ["图宽50px", "图宽80px", "图宽100px", "图宽150px", "图宽200px", "图宽250px", "图宽300px", "图宽350px"],
     textColorId: 0,
     textColor: '白色',
@@ -78,9 +114,9 @@ Page({
   },
   createGif1: function(){
     //如果已经生成过gif，直接预览
-    if(finishGifPath){
+    if(this.data.finishGifPath){
         wx.previewImage({
-          urls: [finishGifPath]
+          urls: [this.data.finishGifPath]
         });
       return;
     }
@@ -98,25 +134,59 @@ Page({
       wx.showToast({icon:'none', title: msg, });
     }else{
       //生成gif
-      var makeCount = -1;
-      page.showLoading("GIF制作中...");
+      if (tmpPhotos.length == 0) {
+        //图片大小
+        var maxCount = imgSizeMax[page.data.imgSizeId];
+        if(photos.length>maxCount){
+          wx.showModal({
+            title: '是否继续',
+            content: page.data.imgSize + '图片最多支持' + maxCount + '张，是否删除多余的照片并继续？',
+            showCancel: true,
+            cancelText: '返回修改',
+            confirmText: '删除',
+            success: function(res) {
+              if (res.confirm) {
+                photos.length = maxCount;
+                page.setData({ photos: photos });
+                page.addImage();
+              }
+            }
+          })
+        }else{
+          this.addImage();
+        }
+        return;
+      }
 
+      page.showLoading("初始化GIF...");
       worker.onMessage(function (msg) {
         if(msg.what == "progress"){
           page.showLoading("GIF制作中(" + msg.arg0 + "/" + msg.arg1 + ")");
           return;
         }
-        console.log("GIF制作完成:", msg);
+        
+        //清空数据
+        worker.onMessage(function(msg){});
+        worker.postMessage({
+          what: "clear",
+          data: new ArrayBuffer(0),
+          width: 0,
+          height: 0,
+          fps: 0
+        });
+        tmpPhotos.length = 0;
+
+        //console.log("GIF制作完成:", msg);
         const fileData = new Uint8Array(msg.obj);
         //保存制作完成的gif
         let fsm = wx.getFileSystemManager();
         page.showLoading("保存临时文件...");
-        let filePath = `${wx.env.USER_DATA_PATH}/` + 'create' + Date.now() + '.gif';
+        let filePath = `${wx.env.USER_DATA_PATH}/` + 'create.gif';
         try {
           let res = fsm.writeFile({
             filePath: filePath, data: fileData.buffer,
             success: function (res) {
-              finishGifPath = filePath;
+              page.data.finishGifPath = filePath;
               if (do_preview) {
                 wx.previewImage({
                   urls: [filePath]
@@ -153,8 +223,8 @@ Page({
       worker.postMessage({
         what: "create",
         data: new ArrayBuffer(0),
-        width: imageSize,
-        height: imageSize,
+        width: page.data.imageSize,
+        height: page.data.imageSize,
         fps: parseInt(page.data.fps.replace('帧', ''))
       });
     }
@@ -163,7 +233,7 @@ Page({
     var page = this;
     page.showLoading("清除图片");
     worker.onMessage(function (msg) {
-      console.log("图片已清除:", msg);
+      //console.log("图片已清除:", msg);
       photos.length = 0;
       page.setData({ photos: photos });
       wx.hideLoading();
@@ -176,38 +246,42 @@ Page({
       fps: 0
     });
   },
-  addPhotosToList:function(path, cb){
-    var page = this;
-    page.showLoading('添加图片...');
+  //一次性给GIF制作器添加所有图片
+  addImage: function(){
     //添加一张照片
+    if(tmpPhotos.length == photos.length){
+      this.createGif();
+      return;
+    }
+    //console.log("addImgae>>>>>>>>>>>>tmpPhotos.len=", tmpPhotos.length, "photos.len=", photos.length);
+    //选出当前要添加的图片
+    var nextId = tmpPhotos.length;
+    var photo = photos[nextId];
+    tmpPhotos.push(photo.path);
+    this.showLoading("添加图片" + tmpPhotos.length + "/" + photos.length);
+    var page = this;
     wx.getImageInfo({
-      src: path,
+      src: photo.path,
       success(res) {
-        let width = imageSize;
-        let height = imageSize / res.width * res.height;
-        let top = (imageSize - height) / 2;
-        canvasContext.drawImage(path, 0, top, width, height);
+        let width = page.data.imageSize;
+        let height = page.data.imageSize / res.width * res.height;
+        let top = (page.data.imageSize - height) / 2;
+        canvasContext.drawImage(photo.path, 0, top, width, height);
         canvasContext.setFillStyle(textColor);
-        //canvasContext.setStrokeStyle(textColor);
-        canvasContext.setFontSize(imageSize/8);
-        canvasContext.fillText(text, 10, imageSize-(imageSize/7), imageSize);
-        //canvasContext.strokeText("我很惊讶", 10, imageSize - (imageSize / 8), imageSize);
+        canvasContext.setFontSize(page.data.imageSize / 8);
+        canvasContext.fillText(text, 10, page.data.imageSize - (page.data.imageSize / 7), page.data.imageSize);
         canvasContext.draw(false, function () {
           //提取图片
           wx.canvasGetImageData({
             canvasId: 'canvas',
             x: 0,
             y: 0,
-            width: imageSize,
-            height: imageSize,
+            width: page.data.imageSize,
+            height: page.data.imageSize,
             success(res) {
-              console.log("canvasGetImageData", res);
               worker.onMessage(function (msg) {
                 //console.log("图片添加成功:", msg);
-                photos.push({ path: path });
-                page.setData({ photos: photos });
-                wx.hideLoading();
-                cb();
+                page.addImage();
               });
               worker.postMessage({
                 what: "add",
@@ -218,12 +292,17 @@ Page({
               });
             },
             fail: function (err) {
-              cb();
               wx.hideLoading();
-              page.showError('添加失败!' + JSON.stringify(res));
+              tmpPhotos.length = 0;
+              page.showError('图片添加失败!' + JSON.stringify(res));
             }
           });
         });
+      },
+      fail: function(res){
+        wx.hideLoading();
+        tmpPhotos.length = 0;
+        page.showError('图片添加失败!' + JSON.stringify(res));
       }
     });
   },
@@ -235,18 +314,10 @@ Page({
       sourceType: ['album'],
       success: res => {
         if (res.tempFilePaths && res.tempFilePaths.length>0){
-          var idx = 0;
-          var cb1;
-          var cb = function(){
-              idx += 1;
-              if (idx < res.tempFilePaths.length) {
-                page.addPhotosToList(res.tempFilePaths[idx], cb1);
-              } else {
-                //console.log(new Date(), '选择的图片:', page.data.photos);
-              }
-          };
-          cb1 = cb;
-          page.addPhotosToList(res.tempFilePaths[idx], cb1);
+          for(var i =0; i<res.tempFilePaths.length; i++){
+            photos.push({ path: res.tempFilePaths[i] });
+          }
+          this.setData({ photos: photos });
         }
       }
     });
@@ -268,9 +339,9 @@ Page({
       quality: 'normal',
       success: (res) => {
         //console.log(new Date(), "拍照结果:", res.tempImagePath);
-        page.addPhotosToList(res.tempImagePath, function(){
-          page.setData({ btnDisabled: false });
-        });
+        photos.push({ path: res.tempImagePath });
+        this.setData({ photos: photos });
+        page.setData({ btnDisabled: false });
         var strs = [
           '微微移动相机、加快连拍速度、调高帧率，使动画更流畅',
           '调低图片像素(例如50px)，加快制作速度',
@@ -294,23 +365,17 @@ Page({
       }
     });
   },
-  closeRedTip: function(e){
-    this.setData({ redTipHidden: true });
-  },
   //事件处理函数
   bindFpsChange: function(res) {
     this.setData({ fps_id: res.detail.value });
     this.setData({fps: this.data.fpsArray[res.detail.value].replace('/秒', '')});
   },
   bindImgSizeChange: function(res){
-    this.clearImage();
-    imageSize = parseInt(this.data.imgSizeArray[res.detail.value].replace('图宽', '').replace('px', ''));
-    console.log("imageSize=", imageSize);
+  this.data.imageSize = parseInt(this.data.imgSizeArray[res.detail.value].replace('图宽', '').replace('px', ''));
     this.setData({ imgSizeId: res.detail.value });
-    this.setData({ imgSize: imageSize+'px' });
+    this.setData({ imgSize: this.data.imageSize+'px' });
   },
   bindTextColorChange: function(res){
-    this.clearImage();
     textColor = textColors[res.detail.value];
     console.log("textColor=", textColor);
     this.setData({ textColor: this.data.textColorArray[res.detail.value], textColorId: res.detail.value });
@@ -318,8 +383,4 @@ Page({
   onShow: function(){
     this.setData({ btnDisabled: false });
   },
-  onLoad: function () {
-    canvasContext = wx.createCanvasContext('canvas');
-    cameraContext = wx.createCameraContext();
-  }
 })

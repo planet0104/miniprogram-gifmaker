@@ -16,7 +16,7 @@
   </picker>
   <text bindtap='showInputText' class='make make2'>文字</text>
   <picker class="picker text_color" mode="selector" value="{{textColorId}}" bindchange="bindTextColorChange" range="{{textColorArray}}">
-    <view class='picker_text_parent'><text class='picker_text picker_text_img_size'>{{textColor}}</text></view>
+    <view class='picker_text_parent'><text class='picker_text'>{{textColor}}</text></view>
   </picker>
   <button class='btn1' disabled='{{btnDisabled}}' bindtap='takePhoto'>拍照</button>
   <image bindtap='clearImage' src='/static/trash.png' class='trash'></image>
@@ -29,8 +29,4 @@
 <view hidden="{{isInputTextHidden}}" style='position: absolute;top:100vw;background:#fff;width:100%;'>
 <input bindinput="bindText" style='margin:20px;' placeholder='输入文字内容'></input>
 <button bindtap='setText' style='margin-left:20px;margin-right:20px;margin-bottom:100px;'>确定</button>
-</view>
-<view hidden="{{redTipHidden}}" style='padding-left:10px; padding-right:10px;padding-top:10px;margin-left:5px;color:#f66;font-size:15px;border: 1px solid #fbb; border-radius: 10px;'>
-<text style=''>注意：请先设置图片宽度、文字、颜色，再拍照！</text>
-<button bindtap='closeRedTip' style='font-size:13px;width:100px;margin:5px;'>关闭此提示</button>
 </view>

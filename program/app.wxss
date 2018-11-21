@@ -87,7 +87,7 @@
 }
 
 .picker_text{
-  font-size: 15px;
+  font-size: 13px;
   text-align: center;
 }
 .picker_text_parent{
@@ -111,6 +111,7 @@
   margin-top: 50px;
 }
 .text_color{
+  font-size: 16px;
   margin-top: 50px;
   left: 98px;
 }
@@ -136,6 +137,7 @@
   left: 98px;
 }
 .make2{
+  font-size: 12px;
   margin-top: 50px;
 }
 

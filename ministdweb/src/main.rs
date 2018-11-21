@@ -46,9 +46,10 @@ fn create(width: u16, height: u16, fps: u16) -> Vec<u8> {
             let mut encoder = gif::Encoder::new(&mut file, width, height, &[]).unwrap();
             encoder.set(Repeat::Infinite).unwrap();
             let total = images.len() as i32;
+            let mut count = 0;
             for image in &mut *images {
                 //js!(console.log(new Date(), "wasm: create count=", @{count}));
-                // count += 1;
+                count += 1;
                 js!(worker.postMessage({what:"progress", arg0:@{count}, arg1:@{total}}));
                 let mut frame = gif::Frame::from_rgba(width, height, image);
                 frame.delay = 1000 / fps / 10; //设置帧率 10ms倍数
