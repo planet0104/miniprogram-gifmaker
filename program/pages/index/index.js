@@ -77,7 +77,6 @@ Page({
   onShareAppMessage: function (res) {
     return {
       title: '大头贴动画制作',
-      path: '/page/index',
       imageUrl: "/static/basicprofile.png"
     }
   },
