@@ -2,6 +2,9 @@
 
 GIF动画制作微信小程序
 
+<img src="https://github.com/planet0104/miniprogram-gifmaker/blob/master/code0.png" />
+<img src="https://github.com/planet0104/miniprogram-gifmaker/blob/master/code1.png" />
+
 其中GIF生成的功能是用Rust实现的，使用stdweb和gif两个库
 
 https://crates.io/crates/stdweb
