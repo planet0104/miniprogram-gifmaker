@@ -1,4 +1,4 @@
-#![deny(warnings)]
+// #![deny(warnings)]
 
 #[macro_use]
 extern crate stdweb;
@@ -64,11 +64,11 @@ fn create(width: u16, height: u16, fps: u16) -> Vec<u8> {
 }
 
 #[allow(clippy::needless_pass_by_value)]
-fn on_message(what: String, data: ArrayBuffer, width: u16, height: u16, fps: u16) {
+fn on_message(what: String, data: Option<ArrayBuffer>, width: u16, height: u16, fps: u16) {
     let what = what.as_str();
     match what {
         "add" => {
-            let count = add(data.into());
+            let count = add(data.unwrap().into());
             js!{ worker.postMessage({what:"add", obj: @{count}}) }
         }
         "clear" => {
@@ -88,9 +88,15 @@ fn on_message(what: String, data: ArrayBuffer, width: u16, height: u16, fps: u16
 }
 
 fn main() {
+    use stdweb::unstable::TryInto;
     stdweb::initialize();
-    let handle = |msg, data, width, height, fps| {
-        on_message(msg, data, width, height, fps);
+    let handle = |msg:String, data:stdweb::Value, width:u16, height:u16, fps:u16| {
+        
+        let mut array = None;
+        if data.is_reference(){
+            array = Some(data.try_into().unwrap());
+        }
+        on_message(msg, array, width, height, fps);
     };
     js! {
         var handle = @{handle};
@@ -98,7 +104,7 @@ fn main() {
             console.log("线程收到消息:", msg);
             handle(msg.what, msg.data, msg.width, msg.height, msg.fps);
         });
-        console.log("线程准备完毕.");
+        // console.log("线程准备完毕.");
         worker.postMessage("init");
     }
     stdweb::event_loop();

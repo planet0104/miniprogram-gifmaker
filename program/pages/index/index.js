@@ -98,6 +98,7 @@ Page({
     isInputTextHidden: true,
     cam_position: '前置',
     btnDisabled: false,
+    showPreview: "false",
     image_count: 0,
     fps: '3帧',
     fps_id: 2,
@@ -112,11 +113,13 @@ Page({
     tool_tip: '点击拍照按钮添加照片'
   },
   createGif1: function(){
+    if (this.data.showPreview == "") {
+      closePreviewDialog();
+      return;
+    }
     //如果已经生成过gif，直接预览
     if(this.data.finishGifPath){
-        wx.previewImage({
-          urls: [this.data.finishGifPath]
-        });
+        this.showPreviewDialog();
       return;
     }
     do_preview = true;
@@ -168,7 +171,7 @@ Page({
         worker.onMessage(function(msg){});
         worker.postMessage({
           what: "clear",
-          data: new ArrayBuffer(0),
+          data: new ArrayBuffer(),
           width: 0,
           height: 0,
           fps: 0
@@ -185,27 +188,29 @@ Page({
           let res = fsm.writeFile({
             filePath: filePath, data: fileData.buffer,
             success: function (res) {
-              page.data.finishGifPath = filePath;
-              if (do_preview) {
-                wx.previewImage({
-                  urls: [filePath]
-                });
-                do_preview = false;
-              } else {
-                wx.showModal({
-                  title: 'GIF动画制作完成',
-                  content: "点击“预览”查看动图\r\n预览页面长按可保存或分享图片",
-                  confirmText: "预览",
-                  cancelText: "返回",
-                  success: function (res) {
-                    if (res.confirm) {
-                      wx.previewImage({
-                        urls: [filePath]
-                      });
-                    }
-                  }
-                });
-              }
+              //page.data.finishGifPath = filePath;
+              page.setData({ finishGifPath: filePath});
+              page.showPreviewDialog();
+              // if (do_preview) {
+              //   wx.previewImage({
+              //     urls: [filePath]
+              //   });
+              //   do_preview = false;
+              // } else {
+              //   wx.showModal({
+              //     title: 'GIF动画制作完成',
+              //     content: "点击“预览”查看动图\r\n预览页面长按可保存或分享图片",
+              //     confirmText: "预览",
+              //     cancelText: "返回",
+              //     success: function (res) {
+              //       if (res.confirm) {
+              //         wx.previewImage({
+              //           urls: [filePath]
+              //         });
+              //       }
+              //     }
+              //   });
+              // }
             },
             fail: function (res) {
               page.showError('临时文件保存失败!' + JSON.stringify(res));
@@ -219,13 +224,15 @@ Page({
           page.showError('图片读取失败!' + JSON.stringify(e));
         }
       });
-      worker.postMessage({
+      var msg = {
         what: "create",
-        data: new ArrayBuffer(0),
+        data: new ArrayBuffer(),
         width: page.data.imageSize,
         height: page.data.imageSize,
         fps: parseInt(page.data.fps.replace('帧', ''))
-      });
+      };
+      console.log("发送create的消息", msg);
+      worker.postMessage(msg);
     }
   },
   clearImage: function(){
@@ -239,7 +246,7 @@ Page({
     });
     worker.postMessage({
       what: "clear",
-      data: new ArrayBuffer(0),
+      data: new ArrayBuffer(),
       width: 0,
       height: 0,
       fps: 0
@@ -293,7 +300,8 @@ Page({
             fail: function (err) {
               wx.hideLoading();
               tmpPhotos.length = 0;
-              page.showError('图片添加失败!' + JSON.stringify(res));
+              page.showError('图片添加失败，请重新拍照。');
+              page.clearImage();
             }
           });
         });
@@ -301,7 +309,8 @@ Page({
       fail: function(res){
         wx.hideLoading();
         tmpPhotos.length = 0;
-        page.showError('图片添加失败!' + JSON.stringify(res));
+        page.showError('图片添加失败，请重新拍照。');
+        page.clearImage();
       }
     });
   },
@@ -382,4 +391,56 @@ Page({
   onShow: function(){
     this.setData({ btnDisabled: false });
   },
+
+  showPreviewDialog: function(){
+    if (this.data.showPreview == "")? {
+      this.closePreviewDialog();
+      return;
+    }
+    var page = this;
+    page.showLoading("读取图片");
+    wx.getFileSystemManager().readFile({
+      filePath: page.data.finishGifPath,
+      success: function (res) {
+        const base64 = wx.arrayBufferToBase64(res.data);
+        page.setData({ showPreview: "", previewGifPath: "data:image/gif;base64," + base64 }, function(){
+          wx.createSelectorQuery().select('#main_page').boundingClientRect(function (rect) {
+            //页面滚动到底部
+            wx.pageScrollTo({
+              scrollTop: rect.bottom,
+              //duration: 400,
+              duration: 0,
+            });
+          }).exec();
+        });
+      },
+      fail: function (res) {
+        showError("图片读取失败，请重新制作");
+      },
+      complete: function(){
+        wx.hideLoading();
+      }
+    });
+  },
+  closePreviewDialog: function(){
+    var page = this;
+    page.setData({ showPreview: "false" });
+  },
+  previewImage: function(){
+    wx.previewImage({
+      urls: [this.data.finishGifPath]
+    });
+  },
+  deletePhoto: function(event){
+    var path = event.target.dataset.id;
+    var del_id = -1;
+    for(var p in photos){
+      if(photos[p].path == path){
+        del_id = p;
+        break;
+      }
+    }
+    photos.splice(del_id, 1);
+    this.setData({ photos: photos });
+  }
 })

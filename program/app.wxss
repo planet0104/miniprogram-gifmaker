@@ -153,20 +153,26 @@
   width:74px;
   height: 74px;
   margin: 10px;
-  border: 1px solid #c6c6c6; 
+  /* border: 1px solid #c6c6c6;  */
   border-radius: 37px;
-  line-height: 1.428571429;
+  /* line-height: 1.428571429; */
   display: flex;
-  background: #fff;
+  /* background: #fff; */
   margin-top: 10px;
-  align-items: center;
-  font-size: 18px;
-  justify-content: center;  
-  text-align: center;
+  /* align-items: center; */
+  /* font-size: 18px; */
+  /* justify-content: center;   */
+  /* text-align: center; */
+    box-shadow:0px 0px 24rpx #e64c3c;
 }
-.btn1:active, .make:active{
+.make:active{
   background: #eee;
   color: #000;
+}
+
+.btn1:active{
+  box-shadow:0px 0px 24rpx #e64c3c;
+  opacity: 0.9;
 }
 
 .btn2{

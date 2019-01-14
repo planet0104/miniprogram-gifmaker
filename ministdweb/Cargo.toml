@@ -5,7 +5,7 @@ authors = ["Jia Ye <planet0104@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-stdweb = "0.4.10"
+stdweb = "0.4.13"
 gif = "0.10.1"
 
 [profile.release]

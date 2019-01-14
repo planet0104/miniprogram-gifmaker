@@ -1,1 +1,54 @@
 /**index.wxss**/
+
+.preview-dialog{
+  background: rgb(253, 253, 253);
+  /* position: absolute; */
+  /* left: 50%; */
+  /* top: 95%; */
+  border: solid 1px #b2b2b2;
+  border-radius: 20rpx;
+  width: 600rpx;
+  height: 660rpx;
+  margin: 30rpx auto;
+  /* margin-left: -300rpx; */
+  box-shadow:0px 0px 24rpx #333333;
+}
+
+.preview-dialog image,cover-image{
+  width: 300rpx;
+  height: 300rpx;
+  margin-left: 150rpx;
+}
+
+.preview-dialog .buttons{
+  display: flex;
+
+}
+
+.preview-dialog .text{
+  display: block;
+  text-align: center;
+  padding: 0rpx;
+  margin: 0rpx;
+}
+
+.preview-dialog .title{
+  font-size: 36rpx;
+  line-height: 100rpx;
+  padding: 0rpx;
+  margin: 0rpx;
+}
+
+.preview-dialog .tip{
+  color: #999999;
+  font-size: 36rpx;
+  line-height: 70rpx;
+}
+
+.preview-dialog button{
+  width: 240rpx;
+}
+
+.preview-dialog button.preview{
+  color: #3ec621;
+}

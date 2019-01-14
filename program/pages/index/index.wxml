@@ -1,4 +1,5 @@
 <!--index.wxml-->
+<view id="main_page">
 <canvas hidden="true" style="margin:-350px 0px 0px 0px;width: 350px; height: 350px;" canvas-id="canvas"></canvas>
 <camera flash='off' device-position="{{cam_position}}" id="camera" style='width:100vw; height:100vw'></camera>
 
@@ -18,15 +19,31 @@
   <picker class="picker text_color" mode="selector" value="{{textColorId}}" bindchange="bindTextColorChange" range="{{textColorArray}}">
     <view class='picker_text_parent'><text class='picker_text'>{{textColor}}</text></view>
   </picker>
-  <button class='btn1' disabled='{{btnDisabled}}' bindtap='takePhoto'>拍照</button>
+  <image src="/static/camera.png" class='btn1' disabled='{{btnDisabled}}' bindtap='takePhoto'></image>
   <image bindtap='clearImage' src='/static/trash.png' class='trash'></image>
   <image bindtap='chooseImage'  class="album" src='/static/album.png'></image>
   <image bindtap="changeCamera" class="reload" src='/static/campos.png'></image>
 </view>
 <scroll-view scroll-x style='display: flex; margin-left:8px;margin-right:8px; white-space: nowrap;'>
- <image class="photo" wx:for="{{photos}}" wx:key="image" wx:for-item="item" src='{{item.path}}'></image>
+  <view style='display:inline-block;position:relative;' wx:for="{{photos}}" wx:key="image" wx:for-item="item">
+  <image class="photo" src='{{item.path}}'></image>
+  <image bindtap='deletePhoto' data-id="{{item.path}}" style='position:absolute; z-index:9;bottom:0rpx;right:0rpx;width:40rpx;height:40rpx;padding:10rpx;' src='/static/delete.png'></image>
+  </view>
 </scroll-view>
 <view hidden="{{isInputTextHidden}}" style='position: absolute;top:100vw;background:#fff;width:100%;'>
 <input bindinput="bindText" style='margin:20px;' placeholder='输入文字内容'></input>
 <button bindtap='setText' style='margin-left:20px;margin-right:20px;margin-bottom:100px;'>确定</button>
+</view>
+</view>
+
+<view hidden='{{showPreview}}' style='padding-bottom:20rpx;'>
+<view class='preview-dialog'>
+  <view class='text title'>GIF动画制作完成</view>
+  <image src='{{previewGifPath}}'></image>
+  <view class='text tip tip1'>点击“预览”查看动图</view>
+  <view class='text tip tip2'>预览页面长按可保存或分享图片</view>
+  <view class="buttons">
+    <button bindtap='closePreviewDialog'>关闭</button><button bindtap='previewImage' class='preview'>预览</button>
+  </view>
+</view>
 </view>
