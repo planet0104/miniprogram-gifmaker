@@ -2,7 +2,7 @@
 
 #[macro_use]
 extern crate stdweb;
-extern crate gif;
+use png;
 use gif::{Repeat, SetParameter};
 use std::cell::RefCell;
 use stdweb::web::ArrayBuffer;

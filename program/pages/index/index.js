@@ -49,6 +49,8 @@ Page({
     } catch (e) { }
   },
   onHide: function(){
+  },
+  saveData: function(){
     let fsm = wx.getFileSystemManager();
     let filePath = `${wx.env.USER_DATA_PATH}/` + 'app.data';
     try {
@@ -61,7 +63,7 @@ Page({
           //console.log('临时文件保存失败!', res);
         }
       });
-    } catch (e) {}
+    } catch (e) { }
   },
   showInputText: function(){
     this.setData({ isInputTextHidden: false });
@@ -114,7 +116,7 @@ Page({
   },
   createGif1: function(){
     if (this.data.showPreview == "") {
-      closePreviewDialog();
+      this.closePreviewDialog();
       return;
     }
     //如果已经生成过gif，直接预览
@@ -177,6 +179,8 @@ Page({
           fps: 0
         });
         tmpPhotos.length = 0;
+
+        page.saveData();
 
         //console.log("GIF制作完成:", msg);
         const fileData = new Uint8Array(msg.obj);
@@ -277,6 +281,9 @@ Page({
         canvasContext.setFontSize(page.data.imageSize / 8);
         canvasContext.fillText(text, 10, page.data.imageSize - (page.data.imageSize / 7), page.data.imageSize);
         canvasContext.draw(false, function () {
+          wx.canvasToTempFilePath({
+            ""
+          });
           //提取图片
           wx.canvasGetImageData({
             canvasId: 'canvas',
@@ -289,6 +296,26 @@ Page({
                 //console.log("图片添加成功:", msg);
                 page.addImage();
               });
+              var saveData = res.data;
+              console.log("saveData=", saveData);
+              try {
+                let res = wx.getFileSystemManager().writeFile({
+                  filePath: `${wx.env.USER_DATA_PATH}/` + 'tmp001.image', data: saveData.buffer,
+                  success: function (res) {
+                    console.log("图片数据保存成功");
+                  },
+                  fail: function (res) {
+                    console.log('临时文件保存失败!', res);
+                  },
+                  complete: function (res) {
+                    wx.hideLoading();
+                  }
+                });
+              } catch (e) {
+                wx.hideLoading();
+                console.log('图片保存失败!' ,e);
+              }
+
               worker.postMessage({
                 what: "add",
                 data: res.data.buffer,
@@ -393,25 +420,24 @@ Page({
   },
 
   showPreviewDialog: function(){
-    if (this.data.showPreview == "")? {
-      this.closePreviewDialog();
-      return;
-    }
     var page = this;
     page.showLoading("读取图片");
     wx.getFileSystemManager().readFile({
       filePath: page.data.finishGifPath,
       success: function (res) {
         const base64 = wx.arrayBufferToBase64(res.data);
+        var show = page.data.showPreview == "";
         page.setData({ showPreview: "", previewGifPath: "data:image/gif;base64," + base64 }, function(){
-          wx.createSelectorQuery().select('#main_page').boundingClientRect(function (rect) {
-            //页面滚动到底部
-            wx.pageScrollTo({
-              scrollTop: rect.bottom,
-              //duration: 400,
-              duration: 0,
-            });
-          }).exec();
+          if (!show){
+            wx.createSelectorQuery().select('#main_page').boundingClientRect(function (rect) {
+              //页面滚动到底部
+              wx.pageScrollTo({
+                scrollTop: rect.bottom,
+                //duration: 400,
+                duration: 0,
+              });
+            }).exec();
+          }
         });
       },
       fail: function (res) {
