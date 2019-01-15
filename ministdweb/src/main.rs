@@ -1,111 +1,67 @@
-// #![deny(warnings)]
+#![recursion_limit="128"]
 
 #[macro_use]
 extern crate stdweb;
-use png;
 use gif::{Repeat, SetParameter};
-use std::cell::RefCell;
+use stdweb::unstable::TryInto;
 use stdweb::web::ArrayBuffer;
 
-thread_local!{
-    static IMAGES: RefCell<Vec<Vec<u8>>> = RefCell::new(vec![]);
-}
-
-//添加一张图像数据rgba
-fn add(data: Vec<u8>) -> i32 {
-    let mut count = -1;
-    IMAGES.with(|images| {
-        let mut images = images.borrow_mut();
-        images.push(data);
-        //js!(console.log(new Date(), "wasm: 图片添加完成"));
-        count = images.len() as i32;
-    });
-    count
-}
-
-fn count() -> i32 {
-    let mut count = -1;
-    IMAGES.with(|images| {
-        count = images.borrow().len() as i32;
-    });
-    count
-}
-
-fn clear() {
-    IMAGES.with(|images| {
-        images.borrow_mut().clear();
-    });
-}
-
 //生成gif
-fn create(width: u16, height: u16, fps: u16) -> Vec<u8> {
+fn create(total: usize, width: u16, height: u16, fps: u16){
+    //创建gif编码器
     let mut file = vec![];
-    IMAGES.with(|images| {
-        let mut images = images.borrow_mut();
-        {
-            let mut encoder = gif::Encoder::new(&mut file, width, height, &[]).unwrap();
-            encoder.set(Repeat::Infinite).unwrap();
-            let total = images.len() as i32;
-            let mut count = 0;
-            for image in &mut *images {
-                //js!(console.log(new Date(), "wasm: create count=", @{count}));
-                count += 1;
-                js!(worker.postMessage({what:"progress", arg0:@{count}, arg1:@{total}}));
-                let mut frame = gif::Frame::from_rgba(width, height, image);
-                frame.delay = 1000 / fps / 10; //设置帧率 10ms倍数
-                encoder.write_frame(&frame).unwrap();
-                //js!(console.log(new Date(), "wasm: create count=", @{count}, "帧添加完成."));
+    {
+        let mut encoder = gif::Encoder::new(&mut file, width, height, &[]).unwrap();
+        encoder.set(Repeat::Infinite).unwrap();
+
+        for i in 0..total {
+            match js! {
+                var filePath = getApp().globalData.userDataPath + "gen"+@{i as i32}+".png";
+                console.log("读取图片:", filePath);
+                try{
+                    var result = wx.getFileSystemManager().readFileSync(filePath);
+                    return result;
+                }catch(e){
+                    console.log("图片读取失败：", e);
+                    return null;
+                }
+            } {
+                stdweb::Value::Reference(n) => {
+                    js! {
+                        wx.showLoading({
+                            title: "GIF制作中(" + @{i as i32} + "/" + @{total as i32} + ")",
+                            mask: true,
+                        });
+                    };
+                    let buffer: ArrayBuffer = n.try_into().unwrap();
+                    let buffer = Vec::from(buffer);
+                    let decoder = png::Decoder::new(buffer.as_slice());
+                    let (info, mut reader) = decoder.read_info().unwrap();
+                    let mut buf = vec![0; info.buffer_size()];
+                    reader.next_frame(&mut buf).unwrap();
+
+                    let mut frame = gif::Frame::from_rgba(width, height, &mut buf);
+                    frame.delay = 1000 / fps / 10; //设置帧率 10ms倍数
+                    encoder.write_frame(&frame).unwrap();
+                }
+                _ => {
+                    break;
+                }
             }
         }
-        //let size = file.len() as i32;
-        //js!(console.log(new Date(), "wasm: create>10 文件大小:", @{size}));
-    });
-    file
-}
-
-#[allow(clippy::needless_pass_by_value)]
-fn on_message(what: String, data: Option<ArrayBuffer>, width: u16, height: u16, fps: u16) {
-    let what = what.as_str();
-    match what {
-        "add" => {
-            let count = add(data.unwrap().into());
-            js!{ worker.postMessage({what:"add", obj: @{count}}) }
-        }
-        "clear" => {
-            clear();
-            js!{ worker.postMessage({what:"clear"}) }
-        }
-        "create" => {
-            let img = create(width, height, fps);
-            js!{ worker.postMessage({what:"create", obj:@{img}}) }
-        }
-        "count" => {
-            let c = count();
-            js!{ worker.postMessage({what:"count", obj:@{c}}) }
-        }
-        _ => (),
     }
+    js!{
+        getApp().gifHelper.gif = @{file};
+    };
 }
 
 fn main() {
-    use stdweb::unstable::TryInto;
     stdweb::initialize();
-    let handle = |msg:String, data:stdweb::Value, width:u16, height:u16, fps:u16| {
-        
-        let mut array = None;
-        if data.is_reference(){
-            array = Some(data.try_into().unwrap());
-        }
-        on_message(msg, array, width, height, fps);
-    };
-    js! {
-        var handle = @{handle};
-        worker.onMessage(function(msg){
-            console.log("线程收到消息:", msg);
-            handle(msg.what, msg.data, msg.width, msg.height, msg.fps);
-        });
-        // console.log("线程准备完毕.");
-        worker.postMessage("init");
-    }
+
+    js!({
+        var gifHelper = {};
+        gifHelper.create = @{create};
+        getApp().gifHelper = gifHelper;
+    });
     stdweb::event_loop();
 }

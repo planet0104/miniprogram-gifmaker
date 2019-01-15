@@ -3,7 +3,6 @@
     "pages/index/index",
     "pages/logs/logs"
   ],
-  "workers": "workers",
   "window":{
     "backgroundTextStyle":"light",
     "navigationBarBackgroundColor": "#fff",

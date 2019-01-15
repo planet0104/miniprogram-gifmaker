@@ -1,23 +1,15 @@
 //index.js
 //获取应用实例
 const app = getApp();
-
-const worker = wx.createWorker('workers/ministdweb.js');
+require("ministdweb.js");
 
 var tipId = 0;
-//imgSizeId对应最多图片限制
-var imgSizeMax = [100/*50px*/,64/*80px*/,36/*100px*/,20/*150px*/,12/*200px*/,8/*250px*/,6/*300px*/,4/*350px*/];
 
 var prompt;
 var textColor = 'white';
 
 var textColors = ['white', 'black', 'red', 'yellow', 'green', 'blue'];
 
-worker.onMessage(function (msg) {
-  console.log("主线程收到消息:", msg);
-});
-
-var do_preview = false;
 var text = "";
 var bindText = "";
 
@@ -76,6 +68,10 @@ Page({
     //console.log("文本:", text);
     this.setData({ isInputTextHidden: true});
   },
+  clearText: function(){
+    text = "";
+    this.setData({ isInputTextHidden: true });
+  },
   onShareAppMessage: function (res) {
     return {
       title: '大头贴动画制作',
@@ -95,6 +91,7 @@ Page({
     });
   },
   data: {
+    showShare: false,
     finishGifPath: null,
     imageSize: 150,
     isInputTextHidden: true,
@@ -108,13 +105,14 @@ Page({
     imgSize: '150px',
     imgSizeId: 3,
     imgSizeArray: ["图宽50px", "图宽80px", "图宽100px", "图宽150px", "图宽200px", "图宽250px", "图宽300px", "图宽350px"],
+    previewMode: "scaleToFill",
     textColorId: 0,
     textColor: '白色',
     textColorArray: ['白色', '黑色', '红色', '黄色', '绿色', '蓝色'],
     photos: [],
     tool_tip: '点击拍照按钮添加照片'
   },
-  createGif1: function(){
+  previewGif: function(){
     if (this.data.showPreview == "") {
       this.closePreviewDialog();
       return;
@@ -122,10 +120,13 @@ Page({
     //如果已经生成过gif，直接预览
     if(this.data.finishGifPath){
         this.showPreviewDialog();
-      return;
+    }else{
+      wx.showModal({
+        title: '提示',
+        content: "请先制作Gif",
+        showCancel: false,
+      });
     }
-    do_preview = true;
-    this.createGif();
   },
   createGif: function(){
     var page = this;
@@ -136,139 +137,71 @@ Page({
         msg = "请先拍摄照片";
       }
       wx.showToast({icon:'none', title: msg, });
-    }else{
+      return;
+    }
+
+    tmpPhotos.length = 0;
+    this.addImage(function(){
       //生成gif
-      if (tmpPhotos.length == 0) {
-        //图片大小
-        var maxCount = imgSizeMax[page.data.imgSizeId];
-        if(photos.length>maxCount){
-          wx.showModal({
-            title: '是否继续',
-            content: page.data.imgSize + '图片最多支持' + maxCount + '张，是否删除多余的照片并继续？',
-            showCancel: true,
-            cancelText: '返回修改',
-            confirmText: '删除',
-            success: function(res) {
-              if (res.confirm) {
-                photos.length = maxCount;
-                page.setData({ photos: photos });
-                page.addImage();
-              }
-            }
-          })
-        }else{
-          this.addImage();
-        }
+      page.showLoading("初始化GIF...");
+
+      app.gifHelper.create(count, page.data.imageSize, page.data.imageSize, parseInt(page.data.fps.replace('帧', '')));
+
+      var result = getApp().gifHelper.gif;
+
+      if (!result || result.length==0) {
+        page.showError("Gif制作失败，请重试！");
+        wx.hideLoading();
         return;
       }
 
-      page.showLoading("初始化GIF...");
-      worker.onMessage(function (msg) {
-        if(msg.what == "progress"){
-          page.showLoading("GIF制作中(" + msg.arg0 + "/" + msg.arg1 + ")");
-          return;
-        }
-        
-        //清空数据
-        worker.onMessage(function(msg){});
-        worker.postMessage({
-          what: "clear",
-          data: new ArrayBuffer(),
-          width: 0,
-          height: 0,
-          fps: 0
+      page.saveData();
+
+      const fileData = new Uint8Array(result);
+      result = null;
+
+      //console.log("GIF制作完成:", msg);
+      //const fileData = new Uint8Array(fileData);
+      //保存制作完成的gif
+      let fsm = wx.getFileSystemManager();
+      page.showLoading("保存临时文件...");
+      let filePath = `${wx.env.USER_DATA_PATH}/` + 'create.gif';
+      try {
+        let res = fsm.writeFile({
+          filePath: filePath, data: fileData.buffer,
+          success: function (res) {
+            page.setData({ finishGifPath: filePath });
+            page.showPreviewDialog();
+            tmpPhotos.length = 0;
+          },
+          fail: function (res) {
+            page.showError('临时文件保存失败!' + JSON.stringify(res));
+          },
+          complete: function (res) {
+            wx.hideLoading();
+          }
         });
-        tmpPhotos.length = 0;
-
-        page.saveData();
-
-        //console.log("GIF制作完成:", msg);
-        const fileData = new Uint8Array(msg.obj);
-        //保存制作完成的gif
-        let fsm = wx.getFileSystemManager();
-        page.showLoading("保存临时文件...");
-        let filePath = `${wx.env.USER_DATA_PATH}/` + 'create.gif';
-        try {
-          let res = fsm.writeFile({
-            filePath: filePath, data: fileData.buffer,
-            success: function (res) {
-              //page.data.finishGifPath = filePath;
-              page.setData({ finishGifPath: filePath});
-              page.showPreviewDialog();
-              // if (do_preview) {
-              //   wx.previewImage({
-              //     urls: [filePath]
-              //   });
-              //   do_preview = false;
-              // } else {
-              //   wx.showModal({
-              //     title: 'GIF动画制作完成',
-              //     content: "点击“预览”查看动图\r\n预览页面长按可保存或分享图片",
-              //     confirmText: "预览",
-              //     cancelText: "返回",
-              //     success: function (res) {
-              //       if (res.confirm) {
-              //         wx.previewImage({
-              //           urls: [filePath]
-              //         });
-              //       }
-              //     }
-              //   });
-              // }
-            },
-            fail: function (res) {
-              page.showError('临时文件保存失败!' + JSON.stringify(res));
-            },
-            complete: function (res) {
-              wx.hideLoading();
-            }
-          });
-        } catch (e) {
-          wx.hideLoading();
-          page.showError('图片读取失败!' + JSON.stringify(e));
-        }
-      });
-      var msg = {
-        what: "create",
-        data: new ArrayBuffer(),
-        width: page.data.imageSize,
-        height: page.data.imageSize,
-        fps: parseInt(page.data.fps.replace('帧', ''))
-      };
-      console.log("发送create的消息", msg);
-      worker.postMessage(msg);
-    }
+      } catch (e) {
+        wx.hideLoading();
+        page.showError('图片读取失败!' + JSON.stringify(e));
+      }
+    });
   },
   clearImage: function(){
-    var page = this;
-    page.showLoading("清除图片");
-    worker.onMessage(function (msg) {
-      //console.log("图片已清除:", msg);
-      photos.length = 0;
-      page.setData({ photos: photos });
-      wx.hideLoading();
-    });
-    worker.postMessage({
-      what: "clear",
-      data: new ArrayBuffer(),
-      width: 0,
-      height: 0,
-      fps: 0
-    });
+    photos.length = 0;
+    this.setData({ photos: photos });
   },
   //一次性给GIF制作器添加所有图片
-  addImage: function(){
+  addImage: function(cb){
     //添加一张照片
     if(tmpPhotos.length == photos.length){
-      this.createGif();
+      cb();
       return;
     }
-    //console.log("addImgae>>>>>>>>>>>>tmpPhotos.len=", tmpPhotos.length, "photos.len=", photos.length);
     //选出当前要添加的图片
     var nextId = tmpPhotos.length;
     var photo = photos[nextId];
-    tmpPhotos.push(photo.path);
-    this.showLoading("添加图片" + tmpPhotos.length + "/" + photos.length);
+    this.showLoading("保存图片" + tmpPhotos.length + "/" + photos.length);
     var page = this;
     wx.getImageInfo({
       src: photo.path,
@@ -280,63 +213,45 @@ Page({
         canvasContext.setFillStyle(textColor);
         canvasContext.setFontSize(page.data.imageSize / 8);
         canvasContext.fillText(text, 10, page.data.imageSize - (page.data.imageSize / 7), page.data.imageSize);
+
         canvasContext.draw(false, function () {
-          wx.canvasToTempFilePath({
-            ""
-          });
-          //提取图片
-          wx.canvasGetImageData({
-            canvasId: 'canvas',
+          var fileType = 'png';
+          var obj = {
             x: 0,
             y: 0,
             width: page.data.imageSize,
             height: page.data.imageSize,
-            success(res) {
-              worker.onMessage(function (msg) {
-                //console.log("图片添加成功:", msg);
-                page.addImage();
-              });
-              var saveData = res.data;
-              console.log("saveData=", saveData);
-              try {
-                let res = wx.getFileSystemManager().writeFile({
-                  filePath: `${wx.env.USER_DATA_PATH}/` + 'tmp001.image', data: saveData.buffer,
-                  success: function (res) {
-                    console.log("图片数据保存成功");
-                  },
-                  fail: function (res) {
-                    console.log('临时文件保存失败!', res);
-                  },
-                  complete: function (res) {
-                    wx.hideLoading();
-                  }
-                });
-              } catch (e) {
-                wx.hideLoading();
-                console.log('图片保存失败!' ,e);
-              }
-
-              worker.postMessage({
-                what: "add",
-                data: res.data.buffer,
-                width: 0,
-                height: 0,
-                fps: 0
+            destWidth: page.data.imageSize,
+            destHeight: page.data.imageSize,
+            canvasId: 'canvas',
+            fileType: fileType,
+            success: function (res) {
+              // console.log("图片保存成功：", res);
+              var tmpPath = res.tempFilePath;
+              var savePath = `${wx.env.USER_DATA_PATH}/` + 'gen' + nextId + '.' + fileType;
+              wx.getFileSystemManager().saveFile({
+                tempFilePath: tmpPath,
+                filePath: savePath,
+                success(res) {
+                  tmpPhotos.push(res.savedFilePath);
+                  console.log("图片文件保存成功:", res.savedFilePath);
+                  //保存下一张
+                  page.addImage(cb);
+                }
               });
             },
-            fail: function (err) {
-              wx.hideLoading();
-              tmpPhotos.length = 0;
-              page.showError('图片添加失败，请重新拍照。');
-              page.clearImage();
+            fail: function (res) {
+              page.showError('图片保存失败，请重试！');
             }
-          });
+          };
+          wx.canvasToTempFilePath(obj);
+          
         });
       },
       fail: function(res){
         wx.hideLoading();
         tmpPhotos.length = 0;
-        page.showError('图片添加失败，请重新拍照。');
+        page.showError('图片保存失败，请重试！');
         page.clearImage();
       }
     });
@@ -412,7 +327,6 @@ Page({
   },
   bindTextColorChange: function(res){
     textColor = textColors[res.detail.value];
-    console.log("textColor=", textColor);
     this.setData({ textColor: this.data.textColorArray[res.detail.value], textColorId: res.detail.value });
   },
   onShow: function(){
@@ -427,7 +341,11 @@ Page({
       success: function (res) {
         const base64 = wx.arrayBufferToBase64(res.data);
         var show = page.data.showPreview == "";
-        page.setData({ showPreview: "", previewGifPath: "data:image/gif;base64," + base64 }, function(){
+        var previewMode = "scaleToFill";
+        if(page.data.imageSize<=150){
+          previewMode = "center";
+        }
+        page.setData({ previewMode: previewMode, showPreview: "", previewGifPath: "data:image/gif;base64," + base64 }, function(){
           if (!show){
             wx.createSelectorQuery().select('#main_page').boundingClientRect(function (rect) {
               //页面滚动到底部
@@ -468,5 +386,12 @@ Page({
     }
     photos.splice(del_id, 1);
     this.setData({ photos: photos });
-  }
+  },
+
+  showShare: function () {
+    this.setData({showShare: true });
+  },
+  hideShare: function () {
+    this.setData({showShare: false });
+  },
 })

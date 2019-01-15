@@ -1,6 +1,6 @@
 <!--index.wxml-->
 <view id="main_page">
-<canvas hidden="true" style="margin:-350px 0px 0px 0px;width: 350px; height: 350px;" canvas-id="canvas"></canvas>
+<canvas hidden="" style="position:absolute; z-index:-1;width: 350px; height: 350px;" canvas-id="canvas"></canvas>
 <camera flash='off' device-position="{{cam_position}}" id="camera" style='width:100vw; height:100vw'></camera>
 
 <!-- 模式切换 -->
@@ -10,15 +10,13 @@
     <view class='picker_text_parent'><text class='picker_text'>{{fps}}</text></view>
   </picker>
   <text bindtap='createGif' class='make'>制作</text>
-  <text bindtap='createGif1' class='make make1'>预览</text>
+  <text bindtap='previewGif' class='make make1'>预览</text>
+  <text bindtap='showShare' class='make make3'>分享</text>
 
   <picker class="picker image_size" mode="selector" value="{{imgSizeId}}" bindchange="bindImgSizeChange" range="{{imgSizeArray}}">
     <view class='picker_text_parent'><text class='picker_text picker_text_img_size'>{{imgSize}}</text></view>
   </picker>
   <text bindtap='showInputText' class='make make2'>文字</text>
-  <picker class="picker text_color" mode="selector" value="{{textColorId}}" bindchange="bindTextColorChange" range="{{textColorArray}}">
-    <view class='picker_text_parent'><text class='picker_text'>{{textColor}}</text></view>
-  </picker>
   <image src="/static/camera.png" class='btn1' disabled='{{btnDisabled}}' bindtap='takePhoto'></image>
   <image bindtap='clearImage' src='/static/trash.png' class='trash'></image>
   <image bindtap='chooseImage'  class="album" src='/static/album.png'></image>
@@ -30,16 +28,28 @@
   <image bindtap='deletePhoto' data-id="{{item.path}}" style='position:absolute; z-index:9;bottom:0rpx;right:0rpx;width:40rpx;height:40rpx;padding:10rpx;' src='/static/delete.png'></image>
   </view>
 </scroll-view>
-<view hidden="{{isInputTextHidden}}" style='position: absolute;top:100vw;background:#fff;width:100%;'>
-<input bindinput="bindText" style='margin:20px;' placeholder='输入文字内容'></input>
-<button bindtap='setText' style='margin-left:20px;margin-right:20px;margin-bottom:100px;'>确定</button>
+<view hidden="{{isInputTextHidden}}" class='input-view'>
+<view style='display:flex'>
+  <text>文字颜色：</text>
+    <picker class="text_color" mode="selector" value="{{textColorId}}" bindchange="bindTextColorChange" range="{{textColorArray}}">
+    <view class='picker-text-parent'>
+    <text>{{textColor}}</text>
+    <view class='picker-arrow'></view>
+    </view>
+  </picker>
+</view>
+<input bindinput="bindText" placeholder='输入文字内容'></input>
+<view style='display:flex'>
+<button bindtap='clearText' style='min-width:200rpx;'>清除</button>
+<button bindtap='setText' style='min-width:200rpx;'>确定</button>
+</view>
 </view>
 </view>
 
 <view hidden='{{showPreview}}' style='padding-bottom:20rpx;'>
 <view class='preview-dialog'>
   <view class='text title'>GIF动画制作完成</view>
-  <image src='{{previewGifPath}}'></image>
+  <image mode='{{previewMode}}' src='{{previewGifPath}}'></image>
   <view class='text tip tip1'>点击“预览”查看动图</view>
   <view class='text tip tip2'>预览页面长按可保存或分享图片</view>
   <view class="buttons">
@@ -47,3 +57,14 @@
   </view>
 </view>
 </view>
+
+<!-- 浮动：分享小程序/二维码 -->
+<cover-view class='shaer-app' wx:if="{{showShare}}">
+  <cover-image src='/static/code.jpg'></cover-image>
+  <cover-view class='share-tip'>扫一扫小程序码</cover-view>
+  <cover-view class='about'>如有疑问请联系planet2@qq.com</cover-view>
+  <cover-view style='display:flex'>
+    <button open-type="share">转发给朋友</button>
+    <button bindtap='hideShare'>关闭</button>
+  </cover-view>
+</cover-view>

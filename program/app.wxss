@@ -110,11 +110,6 @@
 .image_size{
   margin-top: 50px;
 }
-.text_color{
-  font-size: 16px;
-  margin-top: 50px;
-  left: 98px;
-}
 
 .make{
   position: absolute;
@@ -134,6 +129,10 @@
 }
 
 .make1{
+  left: 98px;
+}
+.make3{
+  margin-top: 50px;
   left: 98px;
 }
 .make2{

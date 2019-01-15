@@ -1,5 +1,50 @@
 /**index.wxss**/
 
+.text_color{
+  font-size: 16px;
+}
+
+.picker-arrow{
+  width: 0;
+  height: 0;
+  border-width: 20rpx;
+  border-style: solid;
+  border-color: #c6c6c6 transparent transparent transparent;
+  margin-top: 20rpx;
+}
+.picker-text-parent{
+  border: 1px solid #c6c6c6; 
+  border-radius: 10px;
+  display: flex;
+  padding-left: 20rpx;
+  padding-right: 20rpx;
+}
+
+.input-view input{
+  margin-top: 30rpx;
+  margin-bottom: 30rpx;
+}
+
+.input-view{
+  line-height: 70rpx;
+  font-size: 18px;
+  position: absolute;
+  top:100vw;
+  bottom: 100vh;
+  width:90%;
+  height: 330rpx;
+  z-index: 20;
+  border: solid 1px #b2b2b2;
+  background: rgb(253, 253, 253);
+  box-shadow:0px 0px 24rpx #333333;
+  margin-left: 3%;
+  margin-right: 3%;
+  margin-top: 2%;
+  border-radius: 20rpx;
+  padding-top: 50rpx;
+  padding-left: 40rpx;
+}
+
 .preview-dialog{
   background: rgb(253, 253, 253);
   /* position: absolute; */
@@ -51,4 +96,40 @@
 
 .preview-dialog button.preview{
   color: #3ec621;
+}
+
+.shaer-app{
+  position: absolute;
+  top: 150rpx;
+  left: 22rpx;
+  display: block;
+  width: 710rpx;
+  background: #fff;
+  height: 810rpx;
+  z-index: 9;
+  box-shadow:0px 0px 24rpx #333333;
+  border-radius: 70rpx;
+  border: 1px solid #c6c6c6;
+}
+.shaer-app cover-image{
+  width: 500rpx;
+  height: 500rpx;
+  margin-left: 100rpx;
+  margin-top: 10%;
+}
+.shaer-app .share-tip{
+  display: block;
+  padding: 10rpx;
+  text-align: center;
+}
+.shaer-app .about{
+  display: block;
+  text-align: center;
+  font-size: 30rpx;
+  line-height: 60rpx;
+  color: #ccc;
+}
+.shaer-app button{
+  display: block;
+  min-width: 260rpx;
 }
