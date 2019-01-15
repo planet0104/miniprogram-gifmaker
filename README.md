@@ -2,8 +2,7 @@
 
 GIF动画制作微信小程序
 
-<img width="200" height="200" src="https://github.com/planet0104/miniprogram-gifmaker/blob/master/code0.jpg" />
-<img src="https://github.com/planet0104/miniprogram-gifmaker/blob/master/code1.jpg" />
+<img src="https://github.com/planet0104/miniprogram-gifmaker/blob/master/code0.jpg" /><img src="https://github.com/planet0104/miniprogram-gifmaker/blob/master/code1.jpg" />
 
 其中GIF生成的功能是用Rust实现的，目录结构如下：
 
