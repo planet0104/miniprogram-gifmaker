@@ -10,9 +10,9 @@
 }
 
 .img_sm{
-  width: 50px;
-  height: 50px;
-  margin:10px 0px 0px 10px;
+  width: 50rpx;
+  height: 50rpx;
+  margin:10rpx 0rpx 0rpx 10rpx;
 }
 
 .horizontal_center{
@@ -25,42 +25,64 @@
 }
 
 .pt10{
-  padding-top: 10px;
+  padding-top: 10rpx;
 }
 .p10{
-  padding:10px;
+  padding:10rpx;
 }
 
 .p5{
-  padding-top: 5px;
+  padding-top: 5rpx;
 }
 
 .tp10{
-  padding-top: 10px;
+  padding-top: 10rpx;
 }
 
 .reload,.album,.trash{
-  width:22px;
-  height:22px;
-  padding: 5px;
-  border-radius: 17px;
+  width:46rpx;
+  height:46rpx;
+  padding: 10rpx;
+  border-radius: 34rpx;
   background: white;
   border: 1px solid #c6c6c6; 
-  margin-top: 27px;
+  margin-top: 32rpx;
   position: absolute;
 }
 
+.link_faceoff{
+  padding-right: 26rpx;
+  padding-left: 16rpx;
+  position: absolute;
+  right: 23rpx;
+  margin-top: 110rpx;
+  display: flex;
+  border: solid 1px #c6c6c6;
+  border-radius: 45rpx;
+  background: linear-gradient(0deg, #dddfe0, white);
+}
+.link_faceoff image{
+  width: 58rpx;
+  height: 58rpx;
+}
+.link_faceoff text{
+  font-size: 30rpx;
+  padding-top: 10rpx;
+  padding-right: 10rpx;
+  padding-left: 10rpx;
+  color: #4f322c;
+}
+
 .reload{
-  right: 10px;
+  right: 23rpx;
 }
 
 .album{
-  right: 48px;
+  right: 104rpx;
 }
 
 .trash{
-  right: 86px;
-  margin-top: 27px;
+  right: 187rpx;
 }
 .trash:active, .album:active, .reload:active{
   background: eee;
@@ -68,101 +90,94 @@
 }
 
 .photo{
-  width: 50px;
-  height: 50px;
+  width: 100rpx;
+  height: 100rpx;
   border:solid 2px #fefefe;
-  border-radius: 16px;
+  border-radius: 32rpx;
   margin-right: 1px;
 }
 
 .arrow-down{
   margin-left: 5px;
-  width: 6px;
-  height: 6px;
+  width: 12rpx;
+  height: 12rpx;
   /* background: rgba(255, 0,0,0.1); */
   border-color:#969696;
-  border-width: 0 0 2px 2px;
+  border-width: 0 0 4rpx 4rpx;
   border-style: solid;
   transform:rotateZ(-45deg);
 }
 
 .picker_text{
-  font-size: 13px;
+  font-size: 26rpx;
   text-align: center;
 }
 .picker_text_parent{
   border: 1px solid #c6c6c6; 
-  border-radius: 18px;
+  border-radius: 36rpx;
   display: flex;
-  width:34px;
-  height: 34px;
+  width:68rpx;
+  height: 68rpx;
   align-items: center;
   justify-content: center;  
 }
 .picker{
-  left: 10px;
+  left: 20rpx;
   position: absolute;
-  margin-top: 10px;
+  margin-top: 26rpx;
 }
 .picker_text_img_size{
-  font-size: 10px;
+  font-size: 20rpx;
 }
 .image_size{
-  margin-top: 50px;
+  margin-top: 110rpx;
 }
 
 .make{
   position: absolute;
-  left: 52px;
-  margin-top: 10px;
-  font-size: 13px;
+  left: 104rpx;
+  margin-top: 26rpx;
+  font-size: 26rpx;
   border: 1px solid #c6c6c6; 
-  border-radius: 18px;
+  border-radius: 36rpx;
   display: flex;
   padding: 0px;
-  height: 34px;
+  height: 68rpx;
   background: #fff;
   color: black;
-  width: 34px;
+  width: 68rpx;
   align-items: center;
   justify-content: center;  
 }
 
 .make1{
-  left: 98px;
+  left: 196rpx;
 }
 .make3{
-  margin-top: 50px;
-  left: 98px;
+  margin-top: 110rpx;
+  left: 196rpx;
 }
 .make2{
-  font-size: 12px;
-  margin-top: 50px;
+  font-size: 24rpx;
+  margin-top: 110rpx;
 }
 
 .gif{
-  width:50px;
-  height:26px;
-  left: 80px;
+  width:100rpx;
+  height:52rpx;
+  left: 160rpx;
   position: absolute;
-  margin-top: 30px;
+  margin-top: 60rpx;
 }
 
 .btn1{
-  width:74px;
-  height: 74px;
-  margin: 10px;
-  /* border: 1px solid #c6c6c6;  */
-  border-radius: 37px;
-  /* line-height: 1.428571429; */
+  width:148rpx;
+  height: 148rpx;
+  margin: 20rpx;
+  border-radius: 74rpx;
   display: flex;
-  /* background: #fff; */
-  margin-top: 10px;
-  /* align-items: center; */
-  /* font-size: 18px; */
-  /* justify-content: center;   */
-  /* text-align: center; */
-    box-shadow:0px 0px 24rpx #e64c3c;
+  margin-top: 30rpx;
+  box-shadow:0px 0px 24rpx #e64c3c;
 }
 .make:active{
   background: #eee;
@@ -176,18 +191,18 @@
 
 .btn2{
   width:100%;
-  margin-left: 6px;
-  margin-right: 12px;
+  margin-left: 12rpx;
+  margin-right: 24rpx;
 }
 
 .circle{
   border: 1px solid #c6c6c6; 
-  border-radius: 100px;
-  padding-top: 5px;
-  padding-bottom: 5px;
-  padding-left: 80px;
-  padding-right: 80px;
-  margin-top: 10px;
+  border-radius: 100rpx;
+  padding-top: 10rpx;
+  padding-bottom: 10rpx;
+  padding-left: 160rpx;
+  padding-right: 160rpx;
+  margin-top: 20rpx;
   color: #c6c6c6;
   background-color: white;
 }

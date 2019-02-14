@@ -8,5 +8,8 @@
     "navigationBarBackgroundColor": "#fff",
     "navigationBarTitleText": "大头贴动画制作",
     "navigationBarTextStyle":"black"
-  }
+  },
+  "navigateToMiniProgramAppIdList": [
+    "wx69d023c4e39979c1"
+  ]
 }

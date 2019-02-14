@@ -42,6 +42,21 @@ Page({
   },
   onHide: function(){
   },
+
+  jumpToFaceOff: function(){
+    wx.navigateToMiniProgram({
+      appId: 'wx69d023c4e39979c1',
+      path: 'page/index/index',
+      // extraData: {
+      //   foo: 'bar'
+      // },
+      // envVersion: 'develop',
+      success(res) {
+        // 打开成功
+      }
+    })
+  },
+
   saveData: function(){
     let fsm = wx.getFileSystemManager();
     let filePath = `${wx.env.USER_DATA_PATH}/` + 'app.data';

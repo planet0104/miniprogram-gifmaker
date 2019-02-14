@@ -21,6 +21,10 @@
   <image bindtap='clearImage' src='/static/trash.png' class='trash'></image>
   <image bindtap='chooseImage'  class="album" src='/static/album.png'></image>
   <image bindtap="changeCamera" class="reload" src='/static/campos.png'></image>
+  <navigator  class="link_faceoff" target="miniProgram" open-type="navigate" app-id="wx69d023c4e39979c1" path="" extra-data="" version="release">
+    <text>趣图换脸</text>
+    <image src='/static/faceoff_logo.png'></image>
+  </navigator>
 </view>
 <scroll-view scroll-x style='display: flex; margin-left:8px;margin-right:8px; white-space: nowrap;'>
   <view style='display:inline-block;position:relative;' wx:for="{{photos}}" wx:key="image" wx:for-item="item">
