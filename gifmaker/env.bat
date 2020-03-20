@@ -1,0 +1,1 @@
+F:\emsdk\emsdk_env.bat

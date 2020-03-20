@@ -1,4 +1,0 @@
-{
-    // "rust.target": "wasm32-unknown-unknown",
-    "rust.target": "asmjs-unknown-emscripten",
-}

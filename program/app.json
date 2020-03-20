@@ -1,15 +1,17 @@
 {
-  "pages":[
+  "pages": [
     "pages/index/index",
     "pages/logs/logs"
   ],
-  "window":{
-    "backgroundTextStyle":"light",
+  "cloud": true,
+  "window": {
+    "backgroundTextStyle": "light",
     "navigationBarBackgroundColor": "#fff",
     "navigationBarTitleText": "大头贴动画制作",
-    "navigationBarTextStyle":"black"
+    "navigationBarTextStyle": "black"
   },
   "navigateToMiniProgramAppIdList": [
     "wx69d023c4e39979c1"
-  ]
+  ],
+  "sitemapLocation": "sitemap.json"
 }

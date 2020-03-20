@@ -1,0 +1,19 @@
+[package]
+name = "gifmaker"
+version = "1.0.1"
+authors = ["Jia Ye <planet0104@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+gif = "0.10.3"
+png = "0.16.1"
+lzw = "0.10.0"
+
+[profile.release]
+lto = true
+opt-level = 's'
+codegen-units = 1
+panic = 'abort'
+
+[build-dependencies]
+cc = "1.0.50"

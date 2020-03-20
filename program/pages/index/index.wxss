@@ -45,7 +45,16 @@
   padding-left: 40rpx;
 }
 
+.test-img{
+  position: absolute;
+  left: 70rpx;
+  top: 80rpx;
+}
+
 .preview-dialog{
+  position: absolute;
+  left: 70rpx;
+  top: 80rpx;
   background: rgb(253, 253, 253);
   /* position: absolute; */
   /* left: 50%; */

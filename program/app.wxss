@@ -40,8 +40,8 @@
 }
 
 .reload,.album,.trash{
-  width:46rpx;
-  height:46rpx;
+  width:48rpx;
+  height:48rpx;
   padding: 10rpx;
   border-radius: 34rpx;
   background: white;
@@ -121,13 +121,19 @@
   align-items: center;
   justify-content: center;  
 }
+.picker_text_w{
+  width:auto;
+  min-width: 120rpx;
+  padding-left: 10rpx;
+  padding-right: 10rpx;
+}
 .picker{
   left: 20rpx;
   position: absolute;
   margin-top: 26rpx;
 }
 .picker_text_img_size{
-  font-size: 20rpx;
+  font-size: 24rpx;
 }
 .image_size{
   margin-top: 110rpx;
@@ -151,17 +157,33 @@
 }
 
 .make1{
-  left: 196rpx;
+  left: 496rpx;
+  margin-top: 110rpx;
+  padding-left: 20rpx;
+  padding-right: 20rpx;
+  line-height: 60rpx;
+  height: auto;
+  background-color: #07c160;
+  color: #fff;
+  border: solid 1rpx #158a14;
 }
 .make3{
   margin-top: 110rpx;
   left: 196rpx;
 }
 .make2{
-  font-size: 24rpx;
+  /* font-size: 24rpx; */
   margin-top: 110rpx;
 }
-
+.make0{
+  background-color: #1aad19;
+  color: #fff;
+  border: solid 1rpx #158a14;
+}
+.make-m{
+  min-width: 80rpx;
+  left: 185rpx;
+}
 .gif{
   width:100rpx;
   height:52rpx;
