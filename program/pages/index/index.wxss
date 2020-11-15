@@ -142,3 +142,60 @@
   display: block;
   min-width: 260rpx;
 }
+
+.vtip{
+  font-size: 30.5rpx;
+  line-height: 140%;
+  background-color: #ff976a;
+  color: white;
+  border-radius: 10rpx;
+  margin-left: 20rpx;
+  margin-right: 20rpx;
+  margin-top: 20rpx;
+  padding: 20rpx;
+  text-align: center;
+}
+
+.vtip image{
+  width: 18rpx;
+  height: 18rpx;
+  margin-left: 6rpx;
+  margin-right: 6rpx;
+}
+
+.tv-close{
+  background-color: white;
+  color: #333333;
+  padding: 6rpx;
+  border-radius: 5rpx;
+  line-height: 30rpx;
+  height: 30rpx;
+  margin-left: 20rpx;
+  margin-right: 20rpx;
+  font-size: 26rpx;
+  margin-top: 10rpx;
+  display: inline-block;
+}
+
+.cover-view{
+  width:100vw;
+  height:100vw;
+  display: flex;
+  background-color: #f7f7f7;
+  justify-content: center;
+  align-items: center;
+}
+
+.cover-view text{
+  font-size: 32rpx;
+  color: #3ec621;
+  display: block;
+  padding: 30rpx;
+  margin-left: 30rpx;
+  margin-right: 30rpx;
+  text-align: center;
+}
+
+.cover-view button{
+  width: 50%;
+}

@@ -1,1 +1,2 @@
-F:\emsdk\emsdk_env.bat
+::F:\emsdk\emsdk_env.bat
+D:\emscripten\emsdk\emsdk_env.bat

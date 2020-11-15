@@ -1,9 +1,13 @@
 <!--index.wxml-->
 <view id="main_page">
 <canvas hidden="" style="position:absolute; z-index:-1;width: 350px; height: 350px; margin-left:-350px" canvas-id="canvas"></canvas>
-<canvas hidden="" style="position:absolute; z-index:-1;width: 600px; height: 600px; margin-left:-600px" canvas-id="canvas-check"></canvas>
-<camera flash='off' device-position="{{cam_position}}" id="camera" style='width:100vw; height:100vw'></camera>
-
+<camera wx:if="{{ !cameraError }}" binderror="onCameraError" flash='off' device-position="{{cam_position}}" id="camera" style='width:100vw; height:100vw'></camera>
+<view wx:if="{{ cameraError }}" class="cover-view">
+    <view>
+      <text>相机开启失败，请到设置中勾选“摄像头”允许使用相机</text>
+      <button type="primary" bindtap="requestCameraAuth">打开相机权限</button>
+    </view>
+</view>
 <!-- 模式切换 -->
 <text id='tip' class='horizontal_center tp10' style="color:#888;font-size:13px;">{{tool_tip}}</text>
 <view class="horizontal_center">
@@ -28,8 +32,9 @@
 </view>
 <scroll-view scroll-x style='display: flex; margin-left:8px;margin-right:8px; white-space: nowrap;'>
   <view style='display:inline-block;position:relative;' wx:for="{{photos}}" wx:key="image" wx:for-item="item">
-  <image class="photo" src='{{item.path}}'></image>
-  <image bindtap='deletePhoto' data-id="{{item.path}}" style='position:absolute; z-index:9;bottom:0rpx;right:0rpx;width:40rpx;height:40rpx;padding:10rpx;' src='/static/delete.png'></image>
+    <image wx:if="{{ item.valid }}" class="photo" src='{{ item.path}}'></image>
+    <image wx:if="{{ !item.valid }}" class="photo" src='/static/ic_img.png'></image>
+    <image bindtap='deletePhoto' data-id="{{item.path}}" style='position:absolute; z-index:9;bottom:0rpx;right:0rpx;width:40rpx;height:40rpx;padding:10rpx;' src='/static/delete.png'></image>
   </view>
 </scroll-view>
 <view hidden="{{isInputTextHidden}}" class='input-view'>
@@ -42,12 +47,18 @@
     </view>
   </picker>
 </view>
-<input bindinput="bindText" placeholder='输入文字内容'></input>
+<input bindinput="bindText" value="{{ textContent }}" placeholder='输入文字内容'></input>
 <view style='display:flex'>
 <button bindtap='clearText' style='min-width:200rpx;'>清除</button>
 <button bindtap='setText' style='min-width:200rpx;'>确定</button>
 </view>
 </view>
+</view>
+<view wx:if="{{ !hideTipPreview }}" class="vtip">
+  <text>{{ tipPreview }}</text><view bindtap="closeTip0" class="tv-close"><text bindtap="closeTipPreview">不再提示</text><image src="/static/ic_close.png" /></view>
+</view>
+<view wx:if="{{ !hideTipImage }}" class="vtip">
+  <text>{{ tipImage }}</text><view bindtap="closeTip1" class="tv-close"><text bindtap="closeTipImage">不再提示</text><image src="/static/ic_close.png" /></view>
 </view>
 
 <view hidden='{{showPreview}}' style='padding-bottom:20rpx;'>

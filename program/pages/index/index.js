@@ -15,7 +15,6 @@ var text = "";
 var bindText = "";
 
 var canvasContext;
-var canvasContextCheck;
 var cameraContext;
 var photos = [];
 var tmpPhotos = [];
@@ -39,7 +38,6 @@ Page({
     }
     var page = this;
     canvasContext = wx.createCanvasContext('canvas');
-    canvasContextCheck = wx.createCanvasContext('canvas-check');
     cameraContext = wx.createCameraContext();
     let fsm = wx.getFileSystemManager();
     let filePath = `${wx.env.USER_DATA_PATH}/` + 'app.data';
@@ -48,7 +46,7 @@ Page({
         filePath: filePath,
         encoding: "utf8",
         success: function (res) {
-          //console.log("临时文件读取成功", res);
+          console.log("临时文件读取成功", res);
           var data = JSON.parse(res.data);
           data.photos = [];
           data.showPreview = "false";
@@ -61,6 +59,17 @@ Page({
     } catch (e) { }
   },
   onHide: function(){
+  },
+
+  onCameraError(err){
+    this.setData({
+      cameraError: true
+    });
+    wx.showToast({
+      icon: 'none',
+      title: '相机开启失败',
+    });
+    console.log('onCameraError>>', err);
   },
 
   jumpToFaceOff: function(){
@@ -99,13 +108,47 @@ Page({
     bindText = e.detail.value;
   },
   setText: function(){
-    text = bindText;
-    //console.log("文本:", text);
-    this.setData({ isInputTextHidden: true});
+    var page = this;
+    if(!bindText || bindText.length<=0){
+      page.setData({ isInputTextHidden: true});
+      return;
+    }
+    page.showLoading("正在验证文本");
+    wx.cloud.callFunction({
+      name: 'msgSecCheck',
+      data: {
+        text: bindText
+      },
+      success(res) {
+        wx.hideLoading();
+        console.log('文字审查结果', res)
+        if (res.result.errCode == 0 || res.result.errCode == '0') {
+          console.log('文字经过校验,没有违法违规');
+          text = bindText;
+          //console.log("文本:", text);
+          page.setData({ isInputTextHidden: true});
+        } else {
+          wx.showModal({
+            content: '文字存在敏感内容，请重新填写',
+            showCancel: false,
+            confirmText: '我知道了'
+          });
+        }
+      }, fail(res) {
+        console.log("文字验证失败", res);
+        wx.hideLoading();
+        wx.showModal({
+          content: '文字存在敏感内容，请重新填写',
+          showCancel: false,
+          confirmText: '我知道了'
+        });
+      }
+    });
   },
   clearText: function(){
     text = "";
-    this.setData({ isInputTextHidden: true });
+    bindText = '';
+    this.setData({ textContent: '', isInputTextHidden: true });
   },
   // onShareAppMessage: function (res) {
   //   return {
@@ -126,19 +169,23 @@ Page({
     });
   },
   data: {
+    textContent: '',
+    tipPreview: '点击“预览”按钮后，长按GIF图片可保存至本地相册',
+    tipImage: '点击“制作”按钮，生成GIF后经过审核图片才可显示',
+    cameraError: false,
     // showShare: false,
     finishGifPath: null,
-    imageSize: 80,
     isInputTextHidden: true,
     cam_position: '前置',
     btnDisabled: false,
     showPreview: "false",
     image_count: 0,
     fps: '4帧',
-    fps_id: 3,
+    fps_id: 4,
     fpsArray: ['1帧/秒', '2帧/秒', '3帧/秒', '4帧/秒', '5帧/秒', '6帧/秒', '7帧/秒', '8帧/秒', '9帧/秒', '10帧/秒', '11帧/秒', '12帧/秒'],
-    imgSize: '80px',
-    imgSizeId: 1,
+    imageSize: 100,
+    imgSize: '100px',
+    imgSizeId: 2,
     imgSizeArray: ["图宽50px", "图宽80px", "图宽100px", "图宽150px", "图宽200px", "图宽250px", "图宽300px", "图宽350px"],
     previewMode: "scaleToFill",
     textColorId: 0,
@@ -216,16 +263,24 @@ Page({
         let res = fsm.writeFile({
           filePath: filePath, data: fileData.buffer,
           success: function (res) {
-            page.setData({ finishGifPath: filePath });
-            page.showPreviewDialog();
-            tmpPhotos.length = 0;
+            wx.hideLoading();
+            imageHelper.checkImage(filePath, function(ok){
+              if(ok===true){
+                var photos = page.data.photos;
+                for(var i=0; i<photos.length; i++){
+                  photos[i].valid = true;
+                }
+                page.setData({ finishGifPath: filePath, photos });
+                page.showPreviewDialog();
+                tmpPhotos.length = 0; 
+              }
+            });
           },
           fail: function (res) {
+            wx.hideLoading();
             page.showError('临时文件保存失败!' + JSON.stringify(res));
           },
           complete: function (res) {
-            wx.hideLoading();
-            page.saveData();
           }
         });
       } catch (e) {
@@ -236,7 +291,18 @@ Page({
   },
   clearImage: function(){
     photos.length = 0;
-    this.setData({ photos: photos });
+    this.setData({ photos: photos, finishGifPath: null, });
+    this.saveData();
+    //清空文件
+    let filePath = `${wx.env.USER_DATA_PATH}/` + 'create.gif';
+    let fsm = wx.getFileSystemManager();
+    fsm.unlink({
+      filePath,
+      success(res){
+        console.log('文件删除成功:', res);
+      },
+    });
+    wx.showToast({icon:'none', title: '文件已删除', });
   },
   //一次性给GIF制作器添加所有图片
   addImage: function(cb){
@@ -311,16 +377,11 @@ Page({
       sourceType: ['album'],
       success: res => {
         if (res.tempFilePaths && res.tempFilePaths.length>0){
-          //验证图片是否合规
           for(var i =0; i<res.tempFilePaths.length; i++){
             var path = res.tempFilePaths[i];
-            imageHelper.checkImage(path, canvasContextCheck, function(ok){
-              if(ok===true){
-                photos.push({ path: path });
-                page.setData({ photos: photos });
-              }
-            });
+            photos.push({ path: path, valid: false, });
           }
+          page.setData({ photos: photos });
         }
       }
     });
@@ -341,30 +402,26 @@ Page({
     cameraContext.takePhoto({
       quality: 'normal',
       success: (res) => {
-        imageHelper.checkImage(res.tempImagePath, canvasContextCheck, function (ok) {
-          if (ok === true) {
-            //console.log(new Date(), "拍照结果:", res.tempImagePath);
-            photos.push({ path: res.tempImagePath });
-            page.setData({ photos: photos });
-            page.setData({ btnDisabled: false });
-            var strs = [
-              '微微移动相机、加快连拍速度、调高帧率，使动画更流畅',
-              '调低图片像素(例如50px)，加快制作速度',
-              '如果无法拍照，请退出小程序并重新进入'];
-            var change = Math.random() < 0.3;
-            if (change) {
-              let rand = Math.random();
-              if (rand < 0.4) {
-                tipId = 0;
-              } else if (rand > 0.4 && rand < 0.8) {
-                tipId = 1;
-              } else {
-                tipId = 2;
-              }
-            }
-            page.setData({ tool_tip: strs[tipId] }); 
+        //console.log(new Date(), "拍照结果:", res.tempImagePath);
+        photos.push({ path: res.tempImagePath });
+        page.setData({ photos: photos });
+        page.setData({ btnDisabled: false });
+        var strs = [
+          '微微移动相机、加快连拍速度、调高帧率，使动画更流畅',
+          '调低图片像素(例如50px)，加快制作速度',
+          '如果无法拍照，请退出小程序并重新进入'];
+        var change = Math.random() < 0.3;
+        if (change) {
+          let rand = Math.random();
+          if (rand < 0.4) {
+            tipId = 0;
+          } else if (rand > 0.4 && rand < 0.8) {
+            tipId = 1;
+          } else {
+            tipId = 2;
           }
-        });
+        }
+        page.setData({ tool_tip: strs[tipId] }); 
       },
       fail: function (res) {
         page.setData({ btnDisabled: false });
@@ -390,6 +447,10 @@ Page({
     nextShowTime = 0;
   },
   onShow: function(){
+    console.log('cameraContext=', cameraContext);
+    if(!cameraContext){
+      cameraContext = wx.createCameraContext();
+    }
     this.setData({ btnDisabled: false });
     console.log("nextShowTime=", nextShowTime);
     //1分钟显示一次广告
@@ -450,4 +511,47 @@ Page({
   // hideShare: function () {
   //   this.setData({showShare: false });
   // },
+  requestCameraAuth(){
+    var page = this;
+    wx.openSetting({
+      success (res) {
+        if(res.authSetting['scope.camera']){
+          page.setData({ cameraError:false})
+        }
+      }
+    });
+  },
+
+  closeTipPreview(){
+    var page = this;
+    wx.showModal({
+      title: '提示',
+      confirmText: '不再提示',
+      content: page.data.tipPreview,
+      success (res) {
+        if (res.confirm) {
+          page.setData({
+            hideTipPreview: true,
+          });
+          page.saveData();
+        }
+      }
+    });
+  },
+  closeTipImage(){
+    var page = this;
+    wx.showModal({
+      title: '提示',
+      confirmText: '不再提示',
+      content: page.data.tipImage,
+      success (res) {
+        if (res.confirm) {
+          page.setData({
+            hideTipImage: true,
+          });
+          page.saveData();
+        }
+      }
+    });
+  },
 })
