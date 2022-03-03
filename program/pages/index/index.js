@@ -1,8 +1,8 @@
 //index.js
 //获取应用实例
 const app = getApp();
-var GifMaker = require("gifmaker.js");
-var imageHelper = require("image_helper.js");
+import init, { create, addPng, getFile } from '../../utils/gifmaker/gifmaker'
+var imageHelper = require("../../utils/image_helper.js");
 
 var tipId = 0;
 
@@ -24,7 +24,12 @@ let interstitialAd = null
 let nextShowTime = 0;
 
 Page({
-  onLoad: function () {
+  async onLoad() {
+    var page = this;
+    page.showLoading("加载中");
+    await init("/utils/gifmaker/gifmaker_bg.wasm");
+    wx.hideLoading();
+
     // 在页面onLoad回调事件中创建插屏广告实例
     if (wx.createInterstitialAd) {
       interstitialAd = wx.createInterstitialAd({
@@ -226,7 +231,7 @@ Page({
     this.addImage(function(){
       //生成gif
       page.showLoading("初始化GIF...");
-      GifMaker.create(page.data.imageSize, page.data.imageSize, parseInt(page.data.fps.replace('帧', '')));
+      create(page.data.imageSize, page.data.imageSize, parseInt(page.data.fps.replace('帧', '')));
       for(var i=0; i<count; i+=1){
         wx.showLoading({
           title: "GIF制作中(" + i + "/" + count + ")",
@@ -236,13 +241,13 @@ Page({
         try {
           var result = wx.getFileSystemManager().readFileSync(genPath);
           console.log("读取图片:", genPath, result);
-          GifMaker.add_png(new Uint8Array(result));
+          addPng(new Uint8ClampedArray(result));
         } catch (e) {
           console.log("图片读取失败：", e);
         }
       }
 
-      var result = GifMaker.get_file();
+      var result = getFile();
 
       if (!result || result.length==0) {
         page.showError("Gif制作失败，请重试！");

@@ -1,12 +1,8 @@
-// use super::encoder::{Repeat, SetParameter, Encoder};
-use super::emscripten::console_log;
-use gif::*;
-use std::sync::RwLock;
-use std::rc::Rc;
 use std::sync::{Arc, Mutex};
-use std::io::Write;
-use std::io::Cursor;
-use std::io::{self, IoSlice};
+use std::io::{self, Write, IoSlice};
+use anyhow::{anyhow, Result};
+use gif::*;
+use crate::js::*;
 
 struct MyData{
     data: Arc<Mutex<Vec<u8>>>,
@@ -55,41 +51,44 @@ pub struct GifMaker{
 }
 
 impl GifMaker{
-    pub fn new(width: u16, height: u16, fps: u16) -> GifMaker{
-        console_log(&format!("GifMaker new: width={} height={} fps={}", width, height, fps));
+    pub fn new(width: u16, height: u16, fps: u16) -> Result<GifMaker>{
+        log(&format!("GifMaker new: width={} height={} fps={}", width, height, fps));
         let data = MyData{data: Arc::new(Mutex::new(vec![])) };
-        let mut encoder = Encoder::new(data.clone(), width, height, &[]).unwrap();
-        // encoder.set_repeat(Repeat::Infinite).unwrap();
-        encoder.set(Repeat::Infinite);
-        GifMaker{
+        let mut encoder = Encoder::new(data.clone(), width, height, &[])?;
+        encoder.set_repeat(Repeat::Infinite)?;
+        Ok(GifMaker{
             data,
             encoder,
             fps,
             width,
             height
-        }
+        })
     }
 
-    pub fn get_width(&self) -> u16{
-        self.width
-    }
+    // pub fn get_width(&self) -> u16{
+    //     self.width
+    // }
 
-    pub fn get_height(&self) -> u16{
-        self.height
-    }
+    // pub fn get_height(&self) -> u16{
+    //     self.height
+    // }
 
-    pub fn add_png(&mut self, file:&[u8]){
+    pub fn add_png(&mut self, file:&[u8]) -> Result<()>{
         let decoder = png::Decoder::new(file);
-        let (info, mut reader) = decoder.read_info().unwrap();
-        let mut buf = vec![0; info.buffer_size()];
-        reader.next_frame(&mut buf).unwrap();
+        let mut reader = decoder.read_info()?;
+        let mut buf = vec![0; reader.output_buffer_size()];
+        reader.next_frame(&mut buf)?;
         let mut frame = gif::Frame::from_rgba_speed(self.width, self.height, &mut buf, 30);
         frame.delay = 1000 / self.fps / 10; //设置帧率 10ms倍数
-        self.encoder.write_frame(&frame).unwrap();
+        self.encoder.write_frame(&frame)?;
+
+        Ok(())
     }
 
-    pub fn get_file(&mut self) -> Vec<u8>{
-        let d = self.data.data.lock().unwrap();
-        d.clone()
+    pub fn get_file(&mut self) -> Result<Vec<u8>>{
+        match self.data.data.lock(){
+            Ok(data) => Ok(data.clone()),
+            Err(err) => Err(anyhow!("{:?}", err))
+        }
     }
 }
