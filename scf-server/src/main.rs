@@ -12,11 +12,11 @@ use sec_check::*;
 
 #[tokio::main]
 async fn main(){
-    // env_logger::init();
+    env_logger::init();
     
-    env_logger::Builder::new()
-    .filter_level(LevelFilter::Debug)
-    .init();
+    // env_logger::Builder::new()
+    // .filter_level(LevelFilter::Debug)
+    // .init();
 
     //通知初始化成功
     let _ = post_data(&CONFIG.ready_url, &json!({ "msg": "rust ready"})).await;

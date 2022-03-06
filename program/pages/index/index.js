@@ -2,7 +2,7 @@
 //获取应用实例
 const app = getApp();
 import init, { create, addPng, getFile, generateHeaders } from '../../utils/gifmaker/gifmaker'
-var imageHelper = require("../../utils/image_helper.js");
+var imgSecCheck = require("../../utils/img_sec_check.js");
 
 var tipId = 0;
 
@@ -29,30 +29,6 @@ Page({
     page.showLoading("加载中");
     await init("/utils/gifmaker/gifmaker_bg.wasm");
     wx.hideLoading();
-
-    var headers = generateHeaders();
- 
-    wx.request({
-      url: 'https://service-n6jh85tz-1256376761.sh.apigw.tencentcs.com/release/gifmaker',
-      method: 'POST',
-      data: {
-        msg:'习近平',
-      },
-      header: headers,
-      success (res) {
-        console.log('审核结果',res.data)
-      }
-    });
-
-    wx.login({
-      success (res) {
-        if (res.code) {
-         console.log('登录成功:', res);
-        } else {
-          console.log('登录失败！' + res.errMsg)
-        } 
-      }
-    })
 
     // 在页面onLoad回调事件中创建插屏广告实例
     if (wx.createInterstitialAd) {
@@ -143,29 +119,13 @@ Page({
       return;
     }
     page.showLoading("正在验证文本");
-    wx.cloud.callFunction({
-      name: 'msgSecCheck',
-      data: {
-        text: bindText
-      },
-      success(res) {
-        wx.hideLoading();
-        console.log('文字审查结果', res)
-        if (res.result.errCode == 0 || res.result.errCode == '0') {
-          console.log('文字经过校验,没有违法违规');
-          text = bindText;
-          //console.log("文本:", text);
-          page.setData({ isInputTextHidden: true});
-        } else {
-          wx.showModal({
-            content: '文字存在敏感内容，请重新填写',
-            showCancel: false,
-            confirmText: '我知道了'
-          });
-        }
-      }, fail(res) {
-        console.log("文字验证失败", res);
-        wx.hideLoading();
+    imgSecCheck.checkText(bindText, generateHeaders(), (ok) => {
+      wx.hideLoading();
+      if(ok){
+        text = bindText;
+        //console.log("文本:", text);
+        page.setData({ isInputTextHidden: true});
+      }else{
         wx.showModal({
           content: '文字存在敏感内容，请重新填写',
           showCancel: false,
@@ -213,9 +173,9 @@ Page({
     fps_id: 4,
     fpsArray: ['1帧/秒', '2帧/秒', '3帧/秒', '4帧/秒', '5帧/秒', '6帧/秒', '7帧/秒', '8帧/秒', '9帧/秒', '10帧/秒', '11帧/秒', '12帧/秒'],
     imageSize: 100,
-    imgSize: '100px',
-    imgSizeId: 2,
-    imgSizeArray: ["图宽50px", "图宽80px", "图宽100px", "图宽150px", "图宽200px", "图宽250px", "图宽300px", "图宽350px"],
+    imgSize: '200px',
+    imgSizeId: 4,
+    imgSizeArray: ["图宽50px", "图宽80px", "图宽100px", "图宽150px", "图宽200px", "图宽250px", "图宽300px", "图宽350px", "图宽400px", "图宽450px"],
     previewMode: "scaleToFill",
     textColorId: 0,
     textColor: '白色',
@@ -289,11 +249,12 @@ Page({
       page.showLoading("保存临时文件...");
       let filePath = `${wx.env.USER_DATA_PATH}/` + 'create.gif';
       try {
-        let res = fsm.writeFile({
+        fsm.writeFile({
           filePath: filePath, data: fileData.buffer,
           success: function (res) {
-            wx.hideLoading();
-            imageHelper.checkImage(filePath, function(ok){
+            page.showLoading('正在验证图片');
+            imgSecCheck.checkImage(filePath, generateHeaders(), function(ok){
+              wx.hideLoading();
               if(ok===true){
                 var photos = page.data.photos;
                 for(var i=0; i<photos.length; i++){
@@ -302,6 +263,12 @@ Page({
                 page.setData({ finishGifPath: filePath, photos });
                 page.showPreviewDialog();
                 tmpPhotos.length = 0; 
+              }else{
+                wx.showModal({
+                  title: '提示',
+                  content: "图片审查失败，请更换",
+                  showCancel: false,
+                });
               }
             });
           },
@@ -437,7 +404,7 @@ Page({
         page.setData({ btnDisabled: false });
         var strs = [
           '微微移动相机、加快连拍速度、调高帧率，使动画更流畅',
-          '调低图片像素(例如50px)，加快制作速度',
+          // '调低图片像素(例如50px)，加快制作速度',
           '如果无法拍照，请退出小程序并重新进入'];
         var change = Math.random() < 0.3;
         if (change) {
