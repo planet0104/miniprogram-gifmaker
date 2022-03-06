@@ -2,24 +2,20 @@
 
 GIF动画制作微信小程序
 
-<img src="https://github.com/planet0104/miniprogram-gifmaker/blob/master/code0.jpg" /><img src="https://github.com/planet0104/miniprogram-gifmaker/blob/master/code1.jpg" />
+## 目录结构
 
-其中GIF生成的功能是用Rust实现的，目录结构如下：
-
-<b>/ministdweb</b> Rust代码
+<b>/gifmaker</b> 生成GIF的Rust库，编译为Webassembly
 
 <b>/program</b> 微信小程序代码
 
-program中的代码可以直接在微信开发工具编译运行，/workers/ministdweb.js是编译好的Rust代码。
+<b>/scf-server</b> 图像审查服务器端代码(腾讯云SCF)
 
-<img src="https://github.com/planet0104/miniprogram-gifmaker/blob/master/screenrecorder.gif" />
-<img src="https://github.com/planet0104/miniprogram-gifmaker/blob/master/screenshot.jpg" />
+## 运行截图
 
+<img src="code0.jpg" />
 
-Rust代码使用的第三方库：
+<img src="code1.jpg" />
 
-https://crates.io/crates/stdweb
+<img src="screenrecorder.gif" />
 
-https://crates.io/crates/gif
-
-https://crates.io/crates/png
+<img src="screenshot.jpg" />
