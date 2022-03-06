@@ -5,7 +5,8 @@ App({
     wx.clearStorage();
   },
   globalData: {
-    userDataPath: `${wx.env.USER_DATA_PATH}/`
+    userDataPath: `${wx.env.USER_DATA_PATH}/`,
+    
   }
 })
 

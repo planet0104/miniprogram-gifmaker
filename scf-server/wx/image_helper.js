@@ -1,5 +1,20 @@
+const uuid = function () {
+  var s = [];
+  var hexDigits = "0123456789abcdef";
+  for (var i = 0; i < 36; i++) {
+    s[i] = hexDigits.substr(Math.floor(Math.random() * 0x10), 1);
+  }
+  s[14] = "4"; // bits 12-15 of the time_hi_and_version field to 0010
+  s[19] = hexDigits.substr((s[19] & 0x3) | 0x8, 1); // bits 6-7 of the clock_seq_hi_and_reserved to 01
+  s[8] = s[13] = s[18] = s[23] = "-";
+
+  var uuid = s.join("");
+  return uuid
+
+}
+
 module.exports = {
-  //图片审查
+  //压缩图片
   checkImage: function (path, callback) {
     console.log("checkImage", path);
     wx.showLoading({
@@ -7,7 +22,10 @@ module.exports = {
       mask: false,
     });
     /*
-    调用
+    注意：callFunction的data最大不能超过40K，不再用这种方式上传文件。
+    1、将压缩后的图片上传到云存储空间，并将fileID传递给云函数。(uploadFile、callFunction)
+    2、在云函数中根据fileID下载图片，然后进行验证。(downloadFile、imgSecCheck)
+    3、在云函数中删除fileID对应的文件，并返回验证结果。(deleteFile)
     */
     var cloudPath = uuid() + ".gif";
     wx.cloud.uploadFile({

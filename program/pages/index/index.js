@@ -1,7 +1,7 @@
 //index.js
 //获取应用实例
 const app = getApp();
-import init, { create, addPng, getFile } from '../../utils/gifmaker/gifmaker'
+import init, { create, addPng, getFile, generateHeaders } from '../../utils/gifmaker/gifmaker'
 var imageHelper = require("../../utils/image_helper.js");
 
 var tipId = 0;
@@ -29,6 +29,30 @@ Page({
     page.showLoading("加载中");
     await init("/utils/gifmaker/gifmaker_bg.wasm");
     wx.hideLoading();
+
+    var headers = generateHeaders();
+ 
+    wx.request({
+      url: 'https://service-n6jh85tz-1256376761.sh.apigw.tencentcs.com/release/gifmaker',
+      method: 'POST',
+      data: {
+        msg:'习近平',
+      },
+      header: headers,
+      success (res) {
+        console.log('审核结果',res.data)
+      }
+    });
+
+    wx.login({
+      success (res) {
+        if (res.code) {
+         console.log('登录成功:', res);
+        } else {
+          console.log('登录失败！' + res.errMsg)
+        } 
+      }
+    })
 
     // 在页面onLoad回调事件中创建插屏广告实例
     if (wx.createInterstitialAd) {
