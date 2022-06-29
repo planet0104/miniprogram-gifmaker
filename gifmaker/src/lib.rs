@@ -1,5 +1,6 @@
 use std::{sync::{Mutex, MutexGuard}};
 use js_sys::*;
+use magic_crypt::{new_magic_crypt, MagicCryptTrait};
 use once_cell::sync::Lazy;
 use wasm_bindgen::prelude::*;
 mod js;
@@ -70,36 +71,28 @@ pub fn get_file() -> Result<Uint8ClampedArray, JsValue>{
     }
 }
 
-//API网关绑定的密钥对
-const SECRET_ID: &str = env!("gifmaker_SecretId");
-const SECRET_KEY: &str = env!("gifmaker_SecretKey");
+const SECRET_KEY: &str = env!("gm_secret_key");
+const SECRET_IV: &str = env!("gm_secret_iv");
+pub const APPID: &str = env!("gm_app_id");
 
 /// 生成验证API网关的密钥Header
 #[wasm_bindgen(js_name = generateHeaders)]
-pub fn generate_headers() -> Result<Object, JsValue>{
+pub fn generate_headers(mut timestamp: f64) -> Result<Object, JsValue>{
+    // log(&format!("generate_headers>> timestamp={timestamp}"));
 
-    let date_time = Date::new_0().to_utc_string().as_string().unwrap_or("".to_string());
+    // 这段代码编译时请删除
+    include_str!("../gm_check_code.rs");
 
-    let source = "gifmaker";
-    let auth = format!(
-        "hmac id=\"{SECRET_ID}\", algorithm=\"hmac-sha1\", headers=\"x-date source\", signature=\""
-    );
-    let sign_str = format!("x-date: {date_time}\nsource: {source}");
+    let crypt = new_magic_crypt!(SECRET_KEY, 128, SECRET_IV);
+    
+    let current_time = format!("{}", timestamp as i64);
 
-    println!("auth={auth}");
-    println!("sign_str={sign_str}");
+    let encrypted_time_str = crypt.encrypt_str_to_base64(current_time);
 
-    let sign = hmacsha1::hmac_sha1(SECRET_KEY.as_bytes(), sign_str.as_bytes());
-    let sign = base64::encode(sign);
-    println!("sign={sign}");
-    let sign = format!("{auth}{sign}\"");
-
-    println!("Authorization={sign}");
+    // log(&format!("encrypted_time_str={encrypted_time_str}"));
 
     let map = Map::new();
-    map.set(&JsValue::from_str("Source"), &JsValue::from_str(source));
-    map.set(&JsValue::from_str("X-Date"), &JsValue::from_str(&date_time.to_string()));
-    map.set(&JsValue::from_str("Authorization"), &JsValue::from_str(&sign));
+    map.set(&JsValue::from_str("secret"), &JsValue::from_str(&encrypted_time_str));
 
     Ok(Object::from_entries(&map)?)
 }

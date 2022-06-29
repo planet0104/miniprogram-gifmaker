@@ -9,4 +9,6 @@ extern "C" {
     pub fn error(s: &str);
     #[wasm_bindgen(js_namespace = wx)]
     pub fn showModal(param: &Object);
+    #[wasm_bindgen(js_namespace = wx)]
+    pub fn getAccountInfoSync() -> Object;
 }

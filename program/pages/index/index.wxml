@@ -57,9 +57,6 @@
 <view wx:if="{{ !hideTipPreview }}" class="vtip">
   <text>{{ tipPreview }}</text><view bindtap="closeTip0" class="tv-close"><text bindtap="closeTipPreview">不再提示</text><image src="/static/ic_close.png" /></view>
 </view>
-<view wx:if="{{ !hideTipImage }}" class="vtip">
-  <text>{{ tipImage }}</text><view bindtap="closeTip1" class="tv-close"><text bindtap="closeTipImage">不再提示</text><image src="/static/ic_close.png" /></view>
-</view>
 
 <view hidden='{{showPreview}}' style='padding-bottom:20rpx;'>
   <cover-view class='preview-dialog'>

@@ -1,0 +1,17 @@
+[Unit]
+Description=gifmaker
+After=syslog.target network.target
+
+[Service]
+Type=simple
+ExecStart=/root/gifmaker/gifmaker-server
+ExecStop=/bin/kill -15 $MAINPID
+WorkingDirectory=/root/gifmaker/
+KillMode=process
+RestartSec=10s
+
+User=root
+Group=root
+
+[Install]
+WantedBy=multi-user.target

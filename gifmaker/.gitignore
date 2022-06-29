@@ -2,3 +2,4 @@
 /target
 **/*.rs.bk
 /pkg
+/gm_check_code.rs

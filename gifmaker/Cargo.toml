@@ -1,6 +1,6 @@
 [package]
 name = "gifmaker"
-version = "1.0.2"
+version = "1.0.3"
 authors = ["Jia Ye <planet0104@gmail.com>"]
 edition = "2021"
 
@@ -8,14 +8,21 @@ edition = "2021"
 crate-type = ["cdylib"]
 
 [dependencies]
-wasm-bindgen = "0.2.79"
-js-sys = "0.3.56"
+wasm-bindgen = "0.2.80"
+js-sys = "0.3.57"
 gif = "0.11.3"
 png = "0.17.5"
-once_cell = "1.9.0"
-anyhow = "1.0.55"
+once_cell = "1.12"
+anyhow = "1"
 base64 = "0.20.0-alpha.1"
-hmac-sha1 = "0.1.3"
+magic-crypt = "3.1.10"
+
+[dependencies.web-sys]
+version = "0.3.57"
+features = [
+  'Document',
+  'Window',
+]
 
 [profile.release]
 lto = true

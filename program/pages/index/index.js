@@ -27,7 +27,9 @@ Page({
   async onLoad() {
     var page = this;
     page.showLoading("加载中");
+    console.log('gifmaker init...');
     await init("/utils/gifmaker/gifmaker_bg.wasm");
+    console.log('gifmaker init ok.');
     wx.hideLoading();
 
     // 在页面onLoad回调事件中创建插屏广告实例
@@ -119,20 +121,19 @@ Page({
       return;
     }
     page.showLoading("正在验证文本");
-    imgSecCheck.checkText(bindText, generateHeaders(), (ok) => {
+    imgSecCheck.checkText(bindText, generateHeaders(Date.now())).then(()=>{
       wx.hideLoading();
-      if(ok){
-        text = bindText;
-        //console.log("文本:", text);
-        page.setData({ isInputTextHidden: true});
-      }else{
-        wx.showModal({
-          content: '文字存在敏感内容，请重新填写',
-          showCancel: false,
-          confirmText: '我知道了'
-        });
-      }
-    });
+      text = bindText;
+      //console.log("文本:", text);
+      page.setData({ isInputTextHidden: true});
+    }).catch(()=>{
+      wx.hideLoading();
+      wx.showModal({
+        content: '文字存在敏感内容，请重新填写',
+        showCancel: false,
+        confirmText: '我知道了'
+      });
+    })
   },
   clearText: function(){
     text = "";
@@ -160,7 +161,6 @@ Page({
   data: {
     textContent: '',
     tipPreview: '点击“预览”按钮后，长按GIF图片可保存至本地相册',
-    tipImage: '点击“制作”按钮，生成GIF后经过审核图片才可显示',
     cameraError: false,
     // showShare: false,
     finishGifPath: null,
@@ -253,24 +253,23 @@ Page({
           filePath: filePath, data: fileData.buffer,
           success: function (res) {
             page.showLoading('正在验证图片');
-            imgSecCheck.checkImage(filePath, generateHeaders(), function(ok){
+            imgSecCheck.checkImage(filePath, generateHeaders(Date.now())).then(()=>{
               wx.hideLoading();
-              if(ok===true){
-                var photos = page.data.photos;
-                for(var i=0; i<photos.length; i++){
-                  photos[i].valid = true;
-                }
-                page.setData({ finishGifPath: filePath, photos });
-                page.showPreviewDialog();
-                tmpPhotos.length = 0; 
-              }else{
-                wx.showModal({
-                  title: '提示',
-                  content: "图片审查失败，请更换",
-                  showCancel: false,
-                });
+              var photos = page.data.photos;
+              for(var i=0; i<photos.length; i++){
+                photos[i].valid = true;
               }
-            });
+              page.setData({ finishGifPath: filePath, photos });
+              page.showPreviewDialog();
+              tmpPhotos.length = 0;
+            }).catch(e=>{
+              wx.hideLoading();
+              wx.showModal({
+                title: '提示',
+                content: "图片审查失败，请更换",
+                showCancel: false,
+              });
+            })
           },
           fail: function (res) {
             wx.hideLoading();
@@ -367,17 +366,32 @@ Page({
   },
   //从相册选择照片
   chooseImage: function(){
-    var page = this;
-    wx.chooseImage({
+    wx.chooseMedia({
+      count: 9,
       sizeType: ['original', 'compressed'],
+      mediaType: ['image'],
       sourceType: ['album'],
+      maxDuration: 30,
+      camera: 'back',
       success: res => {
-        if (res.tempFilePaths && res.tempFilePaths.length>0){
-          for(var i =0; i<res.tempFilePaths.length; i++){
-            var path = res.tempFilePaths[i];
-            photos.push({ path: path, valid: false, });
-          }
-          page.setData({ photos: photos });
+        console.log('图片选择完成:', res);
+        if (res.tempFiles && res.tempFiles.length>0){
+          var filePath = res.tempFiles[0].tempFilePath;
+          //审查图片
+          this.showLoading('正在验证图片');
+          imgSecCheck.checkImage(filePath, generateHeaders(Date.now())).then(()=>{
+            wx.hideLoading();
+            photos.push({ path: filePath, valid: true, });
+            this.setData({ photos: photos });
+          }).catch(e => {
+            wx.hideLoading();
+            console.error('图片审查失败', e);
+            wx.showModal({
+              title: '提示',
+              content: "图片审查失败，请更换",
+              showCancel: false,
+            });
+          });
         }
       }
     });
@@ -528,22 +542,6 @@ Page({
         if (res.confirm) {
           page.setData({
             hideTipPreview: true,
-          });
-          page.saveData();
-        }
-      }
-    });
-  },
-  closeTipImage(){
-    var page = this;
-    wx.showModal({
-      title: '提示',
-      confirmText: '不再提示',
-      content: page.data.tipImage,
-      success (res) {
-        if (res.confirm) {
-          page.setData({
-            hideTipImage: true,
           });
           page.saveData();
         }

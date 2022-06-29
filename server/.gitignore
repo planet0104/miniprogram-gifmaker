@@ -12,3 +12,4 @@ Cargo.lock
 **/*.rs.bk
 
 /.history
+/*.log
