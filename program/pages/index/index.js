@@ -1,7 +1,7 @@
 //index.js
 //获取应用实例
 const app = getApp();
-import init, { create, addPng, getFile, generateHeaders } from '../../utils/gifmaker/gifmaker'
+import init, { create, addPng, getFile } from '../../utils/gifmaker/gifmaker'
 var imgSecCheck = require("../../utils/img_sec_check.js");
 
 var tipId = 0;
@@ -121,7 +121,7 @@ Page({
       return;
     }
     page.showLoading("正在验证文本");
-    imgSecCheck.checkText(bindText, generateHeaders(Date.now())).then(()=>{
+    imgSecCheck.checkText(bindText).then(()=>{
       wx.hideLoading();
       text = bindText;
       //console.log("文本:", text);
@@ -253,7 +253,7 @@ Page({
           filePath: filePath, data: fileData.buffer,
           success: function (res) {
             page.showLoading('正在验证图片');
-            imgSecCheck.checkImage(filePath, generateHeaders(Date.now())).then(()=>{
+            imgSecCheck.checkImage(filePath).then(()=>{
               wx.hideLoading();
               var photos = page.data.photos;
               for(var i=0; i<photos.length; i++){
@@ -379,7 +379,7 @@ Page({
           var filePath = res.tempFiles[0].tempFilePath;
           //审查图片
           this.showLoading('正在验证图片');
-          imgSecCheck.checkImage(filePath, generateHeaders(Date.now())).then(()=>{
+          imgSecCheck.checkImage(filePath).then(()=>{
             wx.hideLoading();
             photos.push({ path: filePath, valid: true, });
             this.setData({ photos: photos });

@@ -1,10 +1,29 @@
+import { generateHeaders } from './gifmaker/gifmaker'
+
+function getHeader(){
+  return new Promise((resolve, reject) => {
+    wx.request({
+      url: 'https://www.ccfish.run/gifmaker-sec-check/server_utc_now',
+      fail(res){
+        reject();
+      },
+      success (res) {
+        var time = res.data;
+        let headers = generateHeaders(time);
+        resolve(headers);
+      }
+    });
+  });
+}
+
 module.exports = {
 
   //文字审查
-  checkText(msg, header){
-    return new Promise((resolve, reject) => {
+  checkText(msg){
+    return new Promise(async (resolve, reject) => {
+      let header = await getHeader();
       wx.request({
-        url: 'http://127.0.0.1:9990/msg_sec_check',
+        url: 'https://www.ccfish.run/gifmaker-sec-check/msg_sec_check',
         method: 'POST',
         data: msg,
         header,
@@ -25,9 +44,10 @@ module.exports = {
   },
 
   //图片审查
-  checkImage(filePath, header) {
+  checkImage(filePath) {
     console.log("checkImage", filePath);
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
+      let header = await getHeader();
       //文件转base64
       var fs = wx.getFileSystemManager();
       fs.readFile({
@@ -36,7 +56,7 @@ module.exports = {
         success(res) {
           console.log('审查图片大小:'+res.data.byteLength);
           wx.request({
-            url: 'http://127.0.0.1:9990/img_sec_check',
+            url: 'https://www.ccfish.run/gifmaker-sec-check/img_sec_check',
             method: 'POST',
             data: res.data,
             header,
