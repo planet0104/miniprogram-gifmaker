@@ -53,20 +53,29 @@ where
 
     fn call(&self, req: ServiceRequest) -> Self::Future {
         
-        match check_secret(req.headers()){
-            Ok(()) => {
-                let fut = self.service.call(req);
+        let uri = req.uri().path();
 
-                Box::pin(async move {
-                    Ok(fut.await?)
-                })
-            },
-            Err(err) => {
-                error!("check_secret: {:?}", err);
-                Box::pin(async move {
-                    Err(error::ErrorBadRequest(format!("{err}")))
-                })
+        if uri.contains("/img_sec_check") || uri.contains("/msg_sec_check"){
+            match check_secret(req.headers()){
+                Ok(()) => {
+                    let fut = self.service.call(req);
+    
+                    Box::pin(async move {
+                        Ok(fut.await?)
+                    })
+                },
+                Err(err) => {
+                    error!("check_secret: {:?}", err);
+                    Box::pin(async move {
+                        Err(error::ErrorBadRequest(format!("{err}")))
+                    })
+                }
             }
+        }else{
+            let fut = self.service.call(req);
+            Box::pin(async move {
+                Ok(fut.await?)
+            })
         }
     }
 }

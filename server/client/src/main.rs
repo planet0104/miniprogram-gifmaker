@@ -12,23 +12,27 @@ async fn main() -> Result<()> {
     println!("SECRET_KEY={SECRET_KEY}");
     println!("SECRET_IV={SECRET_IV}");
 
-    let crypt = new_magic_crypt!(SECRET_KEY, 128, SECRET_IV);
-    
-    let current_time = format!("{}", Utc::now().timestamp_millis());
+    let client = reqwest::Client::new();
+    let current_time:Value = client.get("https://www.ccfish.run/gifmaker-sec-check/server_utc_now").send()
+    .await?
+    .json().await?;
+    let current_time = current_time.as_i64().unwrap();
 
-    let encrypted_time_str = crypt.encrypt_str_to_base64(current_time);
+    println!("current_time={current_time}");
+
+    let crypt = new_magic_crypt!(SECRET_KEY, 128, SECRET_IV);
+
+    let encrypted_time_str = crypt.encrypt_str_to_base64(format!("{current_time}"));
 
     println!("encrypted_time_str={encrypted_time_str}");
 
     let mut headers = HeaderMap::new();
     headers.append("secret", HeaderValue::from_str(&encrypted_time_str)?);
 
-    let client = reqwest::Client::new();
-
     let img = include_bytes!("../test.png").to_vec();
 
     let res:Value = client
-        .post("http://www.ccfish.run:9990/img_sec_check")
+        .post("https://www.ccfish.run/gifmaker-sec-check/img_sec_check")
         .headers(headers.clone())
         .body(Body::from(img))
         .send()
@@ -41,7 +45,7 @@ async fn main() -> Result<()> {
     let msg = "hello!";
 
     let res:Value = client
-        .post("http://www.ccfish.run:9990/msg_sec_check")
+        .post("https://www.ccfish.run/gifmaker-sec-check/msg_sec_check")
         .headers(headers)
         .body(msg)
         .send()

@@ -8,7 +8,7 @@ use actix_web::{error, post, web, App, Error, HttpResponse, HttpServer, get};
 use chrono::Utc;
 use config::Config;
 use futures_util::StreamExt;
-use log::{info, LevelFilter};
+use log::info;
 use serde::{Serialize, Deserialize};
 use serde_json::json;
 use simple_log::LogConfigBuilder;
@@ -65,7 +65,8 @@ async fn server_utc_now() -> Result<HttpResponse, Error> {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct Settings{
     ip: String,
-    port: u16
+    port: u16,
+    scope: String,
 }
 
 #[actix_web::main]
@@ -91,15 +92,23 @@ async fn main() -> std::io::Result<()> {
 
     info!("{:?}", settings);
 
+    let ip = settings.ip;
+    let port = settings.port;
+    let scope = settings.scope;
+
     info!("start scf-server...");
 
-    HttpServer::new(|| App::new()
+    HttpServer::new(move || App::new()
         .wrap(middleware::Authentication)
-        .service(msg_sec_check)
-        .service(img_sec_check)
-        .service(img_sec_check_base64)
-        .service(server_utc_now))
-        .bind((settings.ip, settings.port))?
+            .service(
+                web::scope(&scope)
+                .service(msg_sec_check)
+                .service(img_sec_check)
+                .service(img_sec_check_base64)
+                .service(server_utc_now)
+            )
+        )
+        .bind((ip, port))?
         .run()
         .await
 }
