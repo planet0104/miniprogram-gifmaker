@@ -5,7 +5,7 @@ mod sec_check;
 mod constant;
 mod token;
 use actix_web::{error, post, web, App, Error, HttpResponse, HttpServer, get};
-use chrono::Utc;
+use chrono::{Utc, Local};
 use config::Config;
 use futures_util::StreamExt;
 use log::info;
@@ -27,12 +27,15 @@ async fn img_sec_check(mut payload: web::Payload) -> Result<HttpResponse, Error>
         }
         body.extend_from_slice(&chunk);
     }
+
+    let image_data = body.to_vec();
+    let image_data_len = image_data.len();
     
-    let res = sec_check::img_sec_check(body.to_vec())
+    let res = sec_check::img_sec_check(image_data)
         .await
         .map_err(|err| error::ErrorBadRequest(format!("{err}")))?;
 
-    info!("img_sec_check {:?}", res);
+    info!("img_sec_check {:?} 图像大小:{}K", res, image_data_len/1024);
 
     Ok(HttpResponse::Ok().json(res))
 }
@@ -43,7 +46,8 @@ async fn msg_sec_check(msg: String) -> Result<HttpResponse, Error> {
         .await
         .map_err(|err| error::ErrorBadRequest(format!("{err}")))?;
 
-    info!("msg_sec_check {msg} {:?}", res);
+    let msg_len = msg.len();
+    info!("msg_sec_check 文本长度:{msg_len}  文本内容:{msg} {:?}", res);
 
     Ok(HttpResponse::Ok().json(res))
 }
@@ -59,7 +63,10 @@ async fn img_sec_check_base64(file_base64: String) -> Result<HttpResponse, Error
 
 #[get("/server_utc_now")]
 async fn server_utc_now() -> Result<HttpResponse, Error> {
-    Ok(HttpResponse::Ok().json(json!(Utc::now().timestamp_millis())))
+    let now = Utc::now();
+    info!("server_utc_now: {:?} 本地时间:{}", now, Local::now());
+    let now_timestamp = now.timestamp_millis();
+    Ok(HttpResponse::Ok().json(json!(now_timestamp)))
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

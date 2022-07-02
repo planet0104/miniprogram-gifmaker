@@ -1,3 +1,5 @@
+use std::time::Instant;
+
 use crate::token::*;
 use anyhow::Result;
 use log::info;
@@ -47,6 +49,9 @@ pub async fn img_sec_check(image: Vec<u8>) -> Result<CheckResult> {
 
     let url = format!("https://api.weixin.qq.com/wxa/img_sec_check?access_token={access_token}");
 
+    info!("img_sec_check url={url}");
+    let now = Instant::now();
+
     let client = reqwest::Client::new();
 
     let form = reqwest::multipart::Form::new();
@@ -61,6 +66,8 @@ pub async fn img_sec_check(image: Vec<u8>) -> Result<CheckResult> {
         .json()
         .await?;
 
+    info!("img_sec_check调用耗时: {}ms", now.elapsed().as_millis());
+
     Ok(res)
 }
 
@@ -74,7 +81,9 @@ pub async fn msg_sec_check(content: &str) -> Result<CheckResult> {
 
     let url = format!("https://api.weixin.qq.com/wxa/msg_sec_check?access_token={access_token}");
 
-    info!("url={url}");
+    info!("msg_sec_check url={url}");
+
+    let now = Instant::now();
 
     let client = reqwest::Client::new();
 
@@ -85,6 +94,7 @@ pub async fn msg_sec_check(content: &str) -> Result<CheckResult> {
         .await?
         .json()
         .await?;
-
+    
+    info!("msg_sec_check调用耗时: {}ms", now.elapsed().as_millis());
     Ok(res)
 }
