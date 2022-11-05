@@ -118,7 +118,7 @@ Page({
       return;
     }
     this.showLoading("正在验证文本");
-    imgSecCheck.checkText(bindText).then(()=>{
+    imgSecCheck.checkTextCloudFn(bindText).then(()=>{
       wx.hideLoading();
       text = bindText;
       console.log("文本:", text);
@@ -169,7 +169,7 @@ Page({
     fps: '4帧',
     fps_id: 4,
     fpsArray: ['1帧/秒', '2帧/秒', '3帧/秒', '4帧/秒', '5帧/秒', '6帧/秒', '7帧/秒', '8帧/秒', '9帧/秒', '10帧/秒', '11帧/秒', '12帧/秒'],
-    imageSize: 100,
+    imageSize: 300,
     imgSize: '300px',
     imgSizeId: 6,
     imgSizeArray: ["图宽50px", "图宽80px", "图宽100px", "图宽150px", "图宽200px", "图宽250px", "图宽300px", "图宽350px", "图宽400px", "图宽450px"],
@@ -346,8 +346,8 @@ Page({
   //从相册选择照片
   chooseImage: function(){
     wx.chooseMedia({
-      count: 9,
-      sizeType: ['original', 'compressed'],
+      count: 1,
+      sizeType: ['compressed'],
       mediaType: ['image'],
       sourceType: ['album'],
       maxDuration: 30,
@@ -370,17 +370,23 @@ Page({
       this.setData({ cam_position: 'front' });
     }
   },
-  checkAddImage(filePath, onFinish){
+  checkAddImage(srcFilePath, onFinish){
     console.log('checkAddImage之前 photos:', JSON.stringify(photos));
     //审查图片
     this.showLoading('正在验证图片');
-    imgSecCheck.checkImage(filePath).then(()=>{
+
+    //压缩图片
+    const filePath = `${wx.env.USER_DATA_PATH}/` + 'small_image.jpg';
+
+    let checkOk = ()=>{
       wx.hideLoading();
-      photos.push({ path: filePath, valid: true, });
+      photos.push({ path: srcFilePath, valid: true, });
       console.log('checkAddImage之前 photos:', JSON.stringify(photos));
       this.setData({ photos });
       if(onFinish){ onFinish()};
-    }).catch(e => {
+    };
+
+    let checkError = ()=>{
       if(onFinish){ onFinish()};
       wx.hideLoading();
       console.error('图片审查失败', e);
@@ -389,7 +395,19 @@ Page({
         content: "图片审查失败，请更换",
         showCancel: false,
       });
-    });
+    };
+    
+    this.resizeImageTo(srcFilePath, filePath, 'jpg').then(() => {
+      imgSecCheck.checkImageCloudFn(filePath).then(()=>{
+        checkOk();
+      }).catch(e => {
+        console.error('checkImageCloudFn=>', e);
+        checkError();
+      });
+    }).catch(e => {
+      console.error('resizeImageTo', e);
+      checkError();
+    })
   },
   takePhoto: function(){
     //禁止拍照按钮
@@ -428,9 +446,8 @@ Page({
     this.setData({fps: this.data.fpsArray[res.detail.value].replace('/秒', '')});
   },
   bindImgSizeChange: function(res){
-  this.data.imageSize = parseInt(this.data.imgSizeArray[res.detail.value].replace('图宽', '').replace('px', ''));
-    this.setData({ imgSizeId: res.detail.value });
-    this.setData({ imgSize: this.data.imageSize+'px' });
+    this.data.imageSize = parseInt(this.data.imgSizeArray[res.detail.value].replace('图宽', '').replace('px', ''));
+    this.setData({ imgSizeId: res.detail.value, imgSize: this.data.imageSize+'px' });
   },
   bindTextColorChange: function(res){
     textColor = textColors[res.detail.value];
@@ -525,5 +542,67 @@ Page({
         }
       }
     });
+  },
+  //压缩图片
+  resizeImageTo(path, savePath, fileType){
+    return new Promise((resolve, reject) => {
+      wx.getImageInfo({
+        src: path,
+        success:(res)=> {
+          let width = this.data.imageSize;
+          let height = this.data.imageSize / res.width * res.height;
+          let top = (this.data.imageSize - height) / 2;
+          canvasContext.drawImage(path, 0, top, width, height);
+          canvasContext.setFillStyle(textColor);
+          canvasContext.setFontSize(this.data.imageSize / 8);
+          canvasContext.fillText(text, 10, this.data.imageSize - (this.data.imageSize / 7), this.data.imageSize);
+  
+          canvasContext.draw(false, ()=> {
+            var obj = {
+              x: 0,
+              y: 0,
+              width: this.data.imageSize,
+              height: this.data.imageSize,
+              destWidth: this.data.imageSize,
+              destHeight: this.data.imageSize,
+              canvasId: 'canvas',
+              fileType: fileType,
+              success: (res)=> {
+                // console.log("图片保存成功：", res);
+                var tmpPath = res.tempFilePath;
+                wx.getFileSystemManager().saveFile({
+                  tempFilePath: tmpPath,
+                  filePath: savePath,
+                  success:(res)=> {
+                    console.error('resizeImageTo成功', res);
+                    resolve();
+                  }
+                });
+              },
+              fail: (res)=> {
+                console.error('resizeImageTo 出错', res);
+                reject();
+              }
+            };
+            wx.canvasToTempFilePath(obj);
+          });
+        },
+        fail: (res)=>{
+          console.error('resizeImageTo 出错', res);
+          reject();
+        }
+      });
+    });
+  },
+
+  goMiniprogram(){
+    wx.navigateToMiniProgram({
+      appId: 'wxf6f4b4ee979ccb85',
+      path: 'pages/mine/walkinCoupon/walkinCoupon?storeId=9&couponId=1240',
+      // envVersion: 'develop',
+      success(res) {
+        // 打开成功
+      }
+    })
   },
 })

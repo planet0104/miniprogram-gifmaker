@@ -1,4 +1,5 @@
 <!--index.wxml-->
+<button bindtap="goMiniprogram">跳转</button>
 <view id="main_page">
 <canvas hidden="" style="position:absolute; z-index:-1;width: 350px; height: 350px; margin-left:-350px" canvas-id="canvas"></canvas>
 <camera wx:if="{{ !cameraError }}" binderror="onCameraError" flash='off' device-position="{{cam_position}}" id="camera" style='width:100vw; height:100vw'></camera>

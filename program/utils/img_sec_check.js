@@ -1,4 +1,5 @@
 import { generateHeaders } from './gifmaker/gifmaker'
+var imageHelper = require("./image_helper.js");
 
 function getHeader(){
   return new Promise((resolve, reject) => {
@@ -17,6 +18,38 @@ function getHeader(){
 }
 
 module.exports = {
+  checkImageCloudFn(filePath){
+    return new Promise(async (resolve, reject) => {
+      //验证图片
+      imageHelper.checkImage(filePath, function(ok){
+        if(ok===true){
+          resolve();
+        }else{
+          reject();
+        }
+      });
+    });
+  },
+  checkTextCloudFn(msg){
+    return new Promise(async (resolve, reject) => {
+      wx.cloud.callFunction({
+        name: 'msgSecCheck',
+        data: {
+          text: msg
+        },
+        success(res) {
+          console.log('云函数 文字审查结果', res)
+          if (res.result.errCode == 0 || res.result.errCode == '0') {
+            resolve();
+          } else {
+            reject();
+          }
+        }, fail(res) {
+          reject();
+        }
+      });
+    });
+  },
 
   //文字审查
   checkText(msg){
