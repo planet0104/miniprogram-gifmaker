@@ -1,0 +1,15 @@
+spin_version = "1"
+authors = ["JiaYe <planet2@qq.com>"]
+description = "spin-server"
+name = "spin-server"
+trigger = { type = "http", base = "/" }
+version = "0.1.0"
+
+[[component]]
+id = "wx-sec-check"
+source = "target/wasm32-wasi/release/wx_sec_check.wasm"
+allowed_http_hosts = ["insecure:allow-all"]
+[component.trigger]
+route = "/wx-sec-check"
+[component.build]
+command = "cargo build --target wasm32-wasi --release"

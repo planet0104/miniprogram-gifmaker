@@ -1,0 +1,1 @@
+spin build --up --log-dir ./

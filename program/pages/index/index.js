@@ -118,7 +118,7 @@ Page({
       return;
     }
     this.showLoading("正在验证文本");
-    imgSecCheck.checkTextCloudFn(bindText).then(()=>{
+    imgSecCheck.checkText(bindText).then(()=>{
       wx.hideLoading();
       text = bindText;
       console.log("文本:", text);
@@ -386,7 +386,7 @@ Page({
       if(onFinish){ onFinish()};
     };
 
-    let checkError = ()=>{
+    let checkError = (e)=>{
       if(onFinish){ onFinish()};
       wx.hideLoading();
       console.error('图片审查失败', e);
@@ -398,10 +398,10 @@ Page({
     };
     
     this.resizeImageTo(srcFilePath, filePath, 'jpg').then(() => {
-      imgSecCheck.checkImageCloudFn(filePath).then(()=>{
+      imgSecCheck.checkImage(filePath).then(()=>{
         checkOk();
       }).catch(e => {
-        console.error('checkImageCloudFn=>', e);
+        console.error('checkImage=>', e);
         checkError();
       });
     }).catch(e => {

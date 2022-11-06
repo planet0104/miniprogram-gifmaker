@@ -1,12 +1,11 @@
-use crate::constant::{APPID, APPSECRET};
+use crate::{secret::{APPID, APPSECRET}, tools::bytes_to_string};
 use anyhow::{anyhow, Result};
 use chrono::prelude::*;
 use log::info;
-use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use std::sync::Mutex;
 
-static TOKEN: Lazy<Mutex<Option<Token>>> = Lazy::new(|| Mutex::new(None));
+static TOKEN: Mutex<Option<Token>> = Mutex::new(None);
 
 #[derive(Serialize, Deserialize)]
 pub struct Token {
@@ -64,5 +63,13 @@ pub async fn _refresh_token() -> Result<String> {
 
 pub async fn request_token() -> Result<Token> {
     info!("request_token");
-    Ok(reqwest::get(format!("https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid={APPID}&secret={APPSECRET}")).await?.json().await?)
+    let res = spin_sdk::http::send(
+        http::Request::builder()
+            .method("GET")
+            .uri(format!("https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid={APPID}&secret={APPSECRET}"))
+            .body(None)?,
+    )?;
+    let json = bytes_to_string(res.body())?;
+
+    Ok(serde_json::from_str(&json)?)
 }

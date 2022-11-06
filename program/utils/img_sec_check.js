@@ -1,10 +1,9 @@
 import { generateHeaders } from './gifmaker/gifmaker'
-var imageHelper = require("./image_helper.js");
 
 function getHeader(){
   return new Promise((resolve, reject) => {
     wx.request({
-      url: 'https://www.ccfish.run/gifmaker-sec-check/server_utc_now',
+      url: 'https://www.ccfish.run/serverless/server-utc-now',
       fail(res){
         reject();
       },
@@ -18,45 +17,12 @@ function getHeader(){
 }
 
 module.exports = {
-  checkImageCloudFn(filePath){
-    return new Promise(async (resolve, reject) => {
-      //验证图片
-      imageHelper.checkImage(filePath, function(ok){
-        if(ok===true){
-          resolve();
-        }else{
-          reject();
-        }
-      });
-    });
-  },
-  checkTextCloudFn(msg){
-    return new Promise(async (resolve, reject) => {
-      wx.cloud.callFunction({
-        name: 'msgSecCheck',
-        data: {
-          text: msg
-        },
-        success(res) {
-          console.log('云函数 文字审查结果', res)
-          if (res.result.errCode == 0 || res.result.errCode == '0') {
-            resolve();
-          } else {
-            reject();
-          }
-        }, fail(res) {
-          reject();
-        }
-      });
-    });
-  },
-
   //文字审查
   checkText(msg){
     return new Promise(async (resolve, reject) => {
       let header = await getHeader();
       wx.request({
-        url: 'https://www.ccfish.run/gifmaker-sec-check/msg_sec_check',
+        url: 'https://www.ccfish.run/serverless/wx-sec-check?type=msg',
         method: 'POST',
         data: msg,
         header,
@@ -89,7 +55,7 @@ module.exports = {
         success(res) {
           console.log('审查图片大小:'+res.data.byteLength);
           wx.request({
-            url: 'https://www.ccfish.run/gifmaker-sec-check/img_sec_check',
+            url: 'https://www.ccfish.run/serverless/wx-sec-check?type=img',
             method: 'POST',
             data: res.data,
             header,

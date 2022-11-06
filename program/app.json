@@ -3,7 +3,6 @@
     "pages/index/index",
     "pages/logs/logs"
   ],
-  "cloud": true,
   "window": {
     "backgroundTextStyle": "light",
     "navigationBarBackgroundColor": "#fff",

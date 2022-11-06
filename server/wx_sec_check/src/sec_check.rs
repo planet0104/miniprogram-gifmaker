@@ -1,15 +1,16 @@
-use std::time::Instant;
+use std::{time::Instant, io::Read};
 
-use crate::token::*;
+use crate::{token::*, tools::bytes_to_string};
 use anyhow::Result;
+use bytes::Bytes;
 use log::info;
-use reqwest::multipart::Part;
+use multipart::client::lazy::Multipart;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CheckResult {
-    errcode: i32,
-    errmsg: String,
+    pub(crate) errcode: i32,
+    pub(crate) errmsg: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -37,7 +38,7 @@ pub struct LoginWx {
 }
 
 /// 审核图片
-pub async fn img_sec_check_base64(img: &str) -> Result<CheckResult> {
+pub async fn _img_sec_check_base64(img: &str) -> Result<CheckResult> {
     let bytes = base64::decode(img)?;
     Ok(img_sec_check(bytes).await?)
 }
@@ -52,23 +53,27 @@ pub async fn img_sec_check(image: Vec<u8>) -> Result<CheckResult> {
     info!("img_sec_check url={url}");
     let now = Instant::now();
 
-    let client = reqwest::Client::new();
+    let mut form = Multipart::new();
+    form.add_stream("media", &*image, Some("media".to_string()), None);
+    let mut parpared = form.prepare()?;
+    let boundaray = parpared.boundary().to_string();
+    let mut form_data = Vec::new();
+    parpared.read_to_end(&mut form_data)?;
+    let data_bytes = Bytes::from(form_data);
+    
 
-    let form = reqwest::multipart::Form::new();
-    let file = Part::bytes(image).file_name("media");
-    let form = form.part("media", file);
-
-    let res: CheckResult = client
-        .post(url)
-        .multipart(form)
-        .send()
-        .await?
-        .json()
-        .await?;
+    let res = spin_sdk::http::send(
+        http::Request::builder()
+            .method("POST")
+            .uri(url)
+            .header("content-type", &format!("multipart/form-data; boundary={boundaray}"))
+            .body(Some(data_bytes))?,
+    )?;
+    let json = bytes_to_string(res.body())?;
 
     info!("img_sec_check调用耗时: {}ms", now.elapsed().as_millis());
 
-    Ok(res)
+    Ok(serde_json::from_str(&json)?)
 }
 
 ///审核文本
@@ -85,16 +90,18 @@ pub async fn msg_sec_check(content: &str) -> Result<CheckResult> {
 
     let now = Instant::now();
 
-    let client = reqwest::Client::new();
+    let json_data = json!({ "content": content }).to_string();
+    let data_bytes = Bytes::from(json_data.as_bytes().to_vec());
 
-    let res: CheckResult = client
-        .post(url)
-        .json(&json!({ "content": content }))
-        .send()
-        .await?
-        .json()
-        .await?;
-    
-    info!("msg_sec_check调用耗时: {}ms", now.elapsed().as_millis());
-    Ok(res)
+    let res = spin_sdk::http::send(
+        http::Request::builder()
+            .method("POST")
+            .uri(url)
+            .body(Some(data_bytes))?,
+    )?;
+    let json = bytes_to_string(res.body())?;
+
+    info!("img_sec_check调用耗时: {}ms", now.elapsed().as_millis());
+
+    Ok(serde_json::from_str(&json)?)
 }

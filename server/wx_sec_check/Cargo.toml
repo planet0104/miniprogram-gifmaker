@@ -1,0 +1,35 @@
+[package]
+name = "wx-sec-check"
+authors = ["JiaYe <planet2@qq.com>"]
+description = "wx-sec-check"
+version = "1.0.0"
+edition = "2021"
+
+[lib]
+crate-type = [ "cdylib" ]
+
+[dependencies]
+# Useful crate to handle errors.
+anyhow = "1"
+# Crate to simplify working with bytes.
+bytes = "1"
+# General-purpose crate with common HTTP types.
+http = "0.2"
+# The Spin SDK.
+spin-sdk = { git = "https://github.com/fermyon/spin", tag = "v0.6.0" }
+# Crate that generates Rust Wasm bindings from a WebAssembly interface.
+wit-bindgen-rust = { git = "https://github.com/bytecodealliance/wit-bindgen", rev = "cb871cfa1ee460b51eb1d144b175b9aab9c50aba" }
+
+tokio = { version = "1.21.2", features = ["sync", "macros" , "io-util", "rt" , "time"] }
+serde_json = "1"
+multipart = "0.18"
+log = "0.4"
+env_logger = "0.9.1"
+base64 = "0.20.0-alpha.1"
+serde = { version = "1", features = ["derive"] }
+chrono = "0.4.22"
+magic-crypt = "3.1.12"
+mime_guess = "2.0.4"
+
+[workspace]
+exclude = ["test_client"]

@@ -1,0 +1,15 @@
+spin_version = "1"
+authors = ["JiaYe <planet2@qq.com>"]
+description = "spin-server"
+name = "spin-server"
+trigger = { type = "http", base = "/" }
+version = "1.0.0"
+
+[[component]]
+id = "server-utc-now"
+source = "target/wasm32-wasi/release/server_utc_now.wasm"
+allowed_http_hosts = ["insecure:allow-all"]
+[component.trigger]
+route = "/server-utc-now"
+[component.build]
+command = "cargo build --target wasm32-wasi --release"

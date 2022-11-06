@@ -1,0 +1,1 @@
+spin up --log-dir ./

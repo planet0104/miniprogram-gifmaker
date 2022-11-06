@@ -1,4 +1,4 @@
-use chrono::Utc;
+use chrono::Local;
 use magic_crypt::{new_magic_crypt, MagicCryptTrait};
 use reqwest::{header::{HeaderMap, HeaderValue}, Body};
 use anyhow::Result;
@@ -13,10 +13,8 @@ async fn main() -> Result<()> {
     println!("SECRET_IV={SECRET_IV}");
 
     let client = reqwest::Client::new();
-    let current_time:Value = client.get("https://www.ccfish.run/gifmaker-sec-check/server_utc_now").send()
-    .await?
-    .json().await?;
-    let current_time = current_time.as_i64().unwrap();
+    
+    let current_time = Local::now().timestamp_millis();
 
     println!("current_time={current_time}");
 
@@ -26,13 +24,16 @@ async fn main() -> Result<()> {
 
     println!("encrypted_time_str={encrypted_time_str}");
 
+    // let server = "http://127.0.0.1:3000/";
+    let server = "https://www.ccfish.run/serverless/";
+
     let mut headers = HeaderMap::new();
     headers.append("secret", HeaderValue::from_str(&encrypted_time_str)?);
 
     let img = include_bytes!("../test.png").to_vec();
 
     let res:Value = client
-        .post("https://www.ccfish.run/gifmaker-sec-check/img_sec_check")
+    .post(format!("{server}wx-sec-check?type=img"))
         .headers(headers.clone())
         .body(Body::from(img))
         .send()
@@ -45,7 +46,7 @@ async fn main() -> Result<()> {
     let msg = "hello!";
 
     let res:Value = client
-        .post("https://www.ccfish.run/gifmaker-sec-check/msg_sec_check")
+        .post(format!("{server}wx-sec-check?type=msg"))
         .headers(headers)
         .body(msg)
         .send()
